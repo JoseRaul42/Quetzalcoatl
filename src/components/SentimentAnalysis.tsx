@@ -80,9 +80,9 @@ const SentimentAnalysis: React.FC = () => {
                     {analysisPending && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
                     Analyze Sentiment
                   </Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>Example Positive</Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>Example Negative</Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>Example Neutral</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>Example 1</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>Example 2</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>Example 3</Button>
                 </div>
               </div>
             </CardContent>
