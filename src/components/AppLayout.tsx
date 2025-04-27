@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Settings, Database, Terminal, BarChart, MessageSquare, Clock } from "lucide-react";
+import { Settings, Database, Terminal, BarChart, MessageSquare, Clock, Computer } from "lucide-react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -43,8 +43,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <Sidebar>
           <SidebarHeader className="flex items-center justify-between p-4">
             <div className="flex items-center">
-              <Database className="h-6 w-6 text-sidebar-primary mr-2" />
-              <h1 className="text-lg font-bold">Crypto Automator</h1>
+              <Computer className="h-6 w-6 text-sidebar-primary mr-2" />
+              <h1 className="text-lg font-bold">Trade Automator</h1>
             </div>
           </SidebarHeader>
           
