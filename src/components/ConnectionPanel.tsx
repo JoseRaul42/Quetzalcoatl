@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useApi } from "@/contexts/ApiContext";
-import { Settings, Database, Terminal, RefreshCw } from "lucide-react";
+import { Settings, Database, Terminal, RefreshCw, MessageSquare } from "lucide-react";
 
 const ConnectionPanel: React.FC = () => {
   const { 
