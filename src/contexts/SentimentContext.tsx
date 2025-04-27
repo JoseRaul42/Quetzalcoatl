@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext } from 'react';
 import { toast } from "sonner";
 import { Sentiment } from './TradingContext';
@@ -29,7 +28,7 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const analyzeText = async (): Promise<void> => {
     if (!marketText.trim()) {
-      toast.error('Please enter a URL to scrape');
+      toast.error('Please enter text to analyze');
       return;
     }
 
@@ -40,24 +39,47 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
     try {
       setAnalysisPending(true);
-      toast.info('Scraping and analyzing URL...');
+      toast.info('Analyzing text...');
   
       const response = await fetch('http://localhost:1234/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: marketText }), // marketText now holds the URL
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "system",
+              content: "You are a market sentiment analyzer. You must respond with ONLY ONE of these exact words: 'positive', 'negative', or 'neutral'."
+            },
+            {
+              role: "user",
+              content: marketText
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 10
+        }),
       });
   
-      if (!response.ok) throw new Error('API error');
-      const { sentiment, text } = await response.json();
+      if (!response.ok) {
+        throw new Error('API response was not ok');
+      }
+  
+      const data = await response.json();
+      const sentimentResponse = data.choices[0].message.content.toLowerCase().trim();
+      
+      // Validate that we got one of our expected sentiments
+      const validSentiments: Sentiment[] = ['positive', 'negative', 'neutral'];
+      const sentiment = validSentiments.includes(sentimentResponse as Sentiment) 
+        ? sentimentResponse as Sentiment 
+        : 'neutral';
   
       setAnalyzedSentiment(sentiment);
-      setLastAnalyzedText(text);
+      setLastAnalyzedText(marketText);
   
-      toast.success(`LLM says: ${sentiment.toUpperCase()} sentiment`);
+      toast.success(`Analysis complete: ${sentiment.toUpperCase()} sentiment detected`);
     } catch (error) {
       console.error('Error analyzing sentiment:', error);
-      toast.error('Failed to analyze sentiment');
+      toast.error('Failed to analyze sentiment. Please check if the LLaMA server is running.');
     } finally {
       setAnalysisPending(false);
     }
