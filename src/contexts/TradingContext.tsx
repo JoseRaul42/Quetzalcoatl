@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "sonner";
 
@@ -12,6 +11,11 @@ export interface TradeRule {
   maxUsdPerTrade: number;
   minUsdThreshold: number;
   portfolioPercentage: number;
+  sellVolumeThreshold: number;
+  sellSentiment: Sentiment;
+  maxUsdPerSell: number;
+  minUsdSellThreshold: number;
+  sellPortfolioPercentage: number;
 }
 
 export interface TradeLog {
@@ -70,6 +74,11 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     maxUsdPerTrade: 500,
     minUsdThreshold: 10,
     portfolioPercentage: 5,
+    sellVolumeThreshold: 1000000,
+    sellSentiment: 'negative',
+    maxUsdPerSell: 500,
+    minUsdSellThreshold: 10,
+    sellPortfolioPercentage: 5,
   });
   
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
@@ -120,17 +129,15 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setVerboseLogging(prev => !prev);
   };
   
-  // Simulated market data updates
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     
     if (isConnected) {
       interval = setInterval(() => {
-        // Generate random market data for simulation purposes
         const priceChange = (Math.random() - 0.5) * 200;
         const newPrice = currentMarketData.price 
           ? currentMarketData.price + priceChange
-          : 40000 + priceChange; // Starting BTC price
+          : 40000 + priceChange;
         
         const newVolume = Math.random() * 5000000 + 1000000;
         
@@ -150,36 +157,67 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
           console.log(`[${selectedPair}] Price: $${newPrice.toFixed(2)}, Volume: $${newVolume.toFixed(2)}`);
         }
         
-        // If auto trading is enabled, check rules and potentially execute trades
-        if (autoTrading && newVolume > tradeRules.volumeThreshold) {
-          const tradeAction = Math.random() > 0.5 ? 'buy' : 'sell';
-          const tradeAmount = Math.min(
-            Math.random() * tradeRules.maxUsdPerTrade, 
-            (newPrice * tradeRules.portfolioPercentage / 100)
-          );
-          
-          if (tradeAmount >= tradeRules.minUsdThreshold) {
-            const newLog: TradeLog = {
-              id: Date.now().toString(),
-              timestamp: new Date(),
-              pair: selectedPair,
-              volumeChecked: newVolume,
-              sentiment: tradeRules.sentiment,
-              action: tradeAction as 'buy' | 'sell',
-              usdAmount: tradeAmount,
-              paperMode: paperTrading,
-            };
-            
-            setTradeLogs(prev => [newLog, ...prev].slice(0, 100)); // Keep the last 100 logs
-            
-            if (verboseLogging) {
-              console.log(`Trade executed: ${tradeAction} $${tradeAmount.toFixed(2)} of ${selectedPair}`);
-            }
-            
-            toast.info(
-              `${tradeAction.toUpperCase()} $${tradeAmount.toFixed(2)} of ${selectedPair}`,
-              { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
+        if (autoTrading) {
+          if (newVolume > tradeRules.volumeThreshold) {
+            const tradeAmount = Math.min(
+              Math.random() * tradeRules.maxUsdPerTrade,
+              (newPrice * tradeRules.portfolioPercentage / 100)
             );
+            
+            if (tradeAmount >= tradeRules.minUsdThreshold) {
+              const newLog: TradeLog = {
+                id: Date.now().toString(),
+                timestamp: new Date(),
+                pair: selectedPair,
+                volumeChecked: newVolume,
+                sentiment: tradeRules.sentiment,
+                action: 'buy',
+                usdAmount: tradeAmount,
+                paperMode: paperTrading,
+              };
+              
+              setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
+              
+              if (verboseLogging) {
+                console.log(`Buy executed: $${tradeAmount.toFixed(2)} of ${selectedPair}`);
+              }
+              
+              toast.info(
+                `BUY $${tradeAmount.toFixed(2)} of ${selectedPair}`,
+                { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
+              );
+            }
+          }
+          
+          if (newVolume > tradeRules.sellVolumeThreshold) {
+            const sellAmount = Math.min(
+              Math.random() * tradeRules.maxUsdPerSell,
+              (newPrice * tradeRules.sellPortfolioPercentage / 100)
+            );
+            
+            if (sellAmount >= tradeRules.minUsdSellThreshold) {
+              const newLog: TradeLog = {
+                id: Date.now().toString(),
+                timestamp: new Date(),
+                pair: selectedPair,
+                volumeChecked: newVolume,
+                sentiment: tradeRules.sellSentiment,
+                action: 'sell',
+                usdAmount: sellAmount,
+                paperMode: paperTrading,
+              };
+              
+              setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
+              
+              if (verboseLogging) {
+                console.log(`Sell executed: $${sellAmount.toFixed(2)} of ${selectedPair}`);
+              }
+              
+              toast.info(
+                `SELL $${sellAmount.toFixed(2)} of ${selectedPair}`,
+                { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
+              );
+            }
           }
         }
       }, refreshRate);
@@ -193,7 +231,6 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const connectToMarket = async (): Promise<void> => {
     try {
       toast.info(`Connecting to ${selectedPair} market...`);
-      // Simulate connection delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       setIsConnected(true);
       toast.success(`Connected to ${selectedPair} market`);

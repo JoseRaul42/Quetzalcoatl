@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -45,6 +44,27 @@ const TradingStrategy: React.FC = () => {
       updateTradeRules({ minUsdThreshold: value });
     }
   };
+  
+  const handleSellVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      updateTradeRules({ sellVolumeThreshold: value });
+    }
+  };
+  
+  const handleMaxSellUsdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      updateTradeRules({ maxUsdPerSell: value });
+    }
+  };
+  
+  const handleMinSellUsdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0) {
+      updateTradeRules({ minUsdSellThreshold: value });
+    }
+  };
 
   return (
     <div className="grid gap-6">
@@ -65,9 +85,9 @@ const TradingStrategy: React.FC = () => {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Rule Configuration</CardTitle>
+            <CardTitle>Buy Rule Configuration</CardTitle>
             <CardDescription>
-              Set up your automated trading rules
+              Set up your automated buying rules
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -82,7 +102,7 @@ const TradingStrategy: React.FC = () => {
                   onChange={handleVolumeChange}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum 24h trading volume to trigger a trade
+                  Minimum 24h trading volume to trigger a buy
                 </p>
               </div>
               
@@ -104,12 +124,12 @@ const TradingStrategy: React.FC = () => {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  LLM sentiment required to execute a trade
+                  LLM sentiment required to execute a buy
                 </p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="max-usd">Maximum USD per Trade</Label>
+                <Label htmlFor="max-usd">Maximum USD per Buy</Label>
                 <Input
                   id="max-usd"
                   type="number"
@@ -118,7 +138,7 @@ const TradingStrategy: React.FC = () => {
                   onChange={handleMaxUsdChange}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Maximum USD amount for any single trade
+                  Maximum USD amount for any single buy
                 </p>
               </div>
               
@@ -132,13 +152,13 @@ const TradingStrategy: React.FC = () => {
                   onChange={handleMinUsdChange}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Don't execute trades below this USD amount
+                  Don't execute buys below this USD amount
                 </p>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <Label htmlFor="portfolio-percent">Portfolio % to Trade: {tradeRules.portfolioPercentage}%</Label>
+                  <Label htmlFor="portfolio-percent">Portfolio % to Buy: {tradeRules.portfolioPercentage}%</Label>
                 </div>
                 <Slider
                   id="portfolio-percent"
@@ -149,7 +169,100 @@ const TradingStrategy: React.FC = () => {
                   onValueChange={(values) => updateTradeRules({ portfolioPercentage: values[0] })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Percentage of portfolio to allocate per trade
+                  Percentage of portfolio to allocate per buy
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Sell Rule Configuration</CardTitle>
+            <CardDescription>
+              Set up your automated selling rules
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="sell-volume-threshold">Sell Volume Threshold (USD)</Label>
+                <Input
+                  id="sell-volume-threshold"
+                  type="number"
+                  min="0"
+                  value={tradeRules.sellVolumeThreshold}
+                  onChange={handleSellVolumeChange}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Minimum 24h trading volume to trigger a sell
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="sell-sentiment">Required Sell Sentiment</Label>
+                <Select
+                  value={tradeRules.sellSentiment}
+                  onValueChange={(value) => updateTradeRules({ sellSentiment: value as Sentiment })}
+                >
+                  <SelectTrigger id="sell-sentiment">
+                    <SelectValue placeholder="Select sentiment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sentiments.map((sentiment) => (
+                      <SelectItem key={sentiment} value={sentiment}>
+                        {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  LLM sentiment required to execute a sell
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="max-sell-usd">Maximum USD per Sell</Label>
+                <Input
+                  id="max-sell-usd"
+                  type="number"
+                  min="0"
+                  value={tradeRules.maxUsdPerSell}
+                  onChange={handleMaxSellUsdChange}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Maximum USD amount for any single sell
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="min-sell-usd">Minimum USD Sell Threshold</Label>
+                <Input
+                  id="min-sell-usd"
+                  type="number"
+                  min="0"
+                  value={tradeRules.minUsdSellThreshold}
+                  onChange={handleMinSellUsdChange}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Don't execute sells below this USD amount
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="sell-portfolio-percent">Portfolio % to Sell: {tradeRules.sellPortfolioPercentage}%</Label>
+                </div>
+                <Slider
+                  id="sell-portfolio-percent"
+                  value={[tradeRules.sellPortfolioPercentage]}
+                  min={1}
+                  max={100}
+                  step={1}
+                  onValueChange={(values) => updateTradeRules({ sellPortfolioPercentage: values[0] })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Percentage of portfolio to sell per trade
                 </p>
               </div>
             </div>
@@ -216,9 +329,11 @@ const TradingStrategy: React.FC = () => {
                 </Button>
               </div>
               
-              <div className="rounded-lg border p-3 bg-secondary">
+              <div className="rounded-lg border p-3 bg-secondary md:col-span-2">
                 <div className="text-sm">
-                  <span className="font-semibold">Current Strategy:</span> Buy/sell {tradeRules.portfolioPercentage}% of portfolio when volume exceeds ${tradeRules.volumeThreshold.toLocaleString()} and sentiment is {tradeRules.sentiment}. Min trade: ${tradeRules.minUsdThreshold}, Max trade: ${tradeRules.maxUsdPerTrade}
+                  <span className="font-semibold">Current Strategy:</span><br />
+                  Buy {tradeRules.portfolioPercentage}% when volume exceeds ${tradeRules.volumeThreshold.toLocaleString()} and sentiment is {tradeRules.sentiment}. Min buy: ${tradeRules.minUsdThreshold}, Max buy: ${tradeRules.maxUsdPerTrade}<br />
+                  Sell {tradeRules.sellPortfolioPercentage}% when volume exceeds ${tradeRules.sellVolumeThreshold.toLocaleString()} and sentiment is {tradeRules.sellSentiment}. Min sell: ${tradeRules.minUsdSellThreshold}, Max sell: ${tradeRules.maxUsdPerSell}
                 </div>
               </div>
             </div>
