@@ -42,7 +42,7 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setAnalysisPending(true);
       toast.info('Scraping and analyzing URL...');
   
-      const response = await fetch('http://localhost:5000/analyze', {
+      const response = await fetch('http://localhost:1234/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: marketText }), // marketText now holds the URL
