@@ -26,25 +26,27 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const analyzeText = async (): Promise<void> => {
     if (!marketText.trim()) {
-      toast.error('Please enter text to analyze');
+      toast.error('Please enter a URL to scrape');
       return;
     }
-
+  
     try {
       setAnalysisPending(true);
-      toast.info('Analyzing market sentiment...');
-      
-      // Simulate calling the LLM API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate different sentiment outcomes for demonstration
-      const sentiments: Sentiment[] = ['positive', 'neutral', 'negative'];
-      const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
-      
-      setAnalyzedSentiment(randomSentiment);
-      setLastAnalyzedText(marketText);
-      
-      toast.success(`Analysis complete: ${randomSentiment.toUpperCase()} sentiment detected`);
+      toast.info('Scraping and analyzing URL...');
+  
+      const response = await fetch('http://localhost:5000/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: marketText }), // marketText now holds the URL
+      });
+  
+      if (!response.ok) throw new Error('API error');
+      const { sentiment, text } = await response.json();
+  
+      setAnalyzedSentiment(sentiment);
+      setLastAnalyzedText(text);
+  
+      toast.success(`LLM says: ${sentiment.toUpperCase()} sentiment`);
     } catch (error) {
       console.error('Error analyzing sentiment:', error);
       toast.error('Failed to analyze sentiment');
