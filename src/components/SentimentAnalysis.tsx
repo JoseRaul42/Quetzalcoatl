@@ -37,8 +37,12 @@ const SentimentAnalysis: React.FC = () => {
     "Mixed signals in the crypto market as trading volumes remain stable. Analysts are divided on near-term price predictions."
   ];
   
-  const loadExampleText = (index: number) => {
+  const loadExampleAndAnalyze = async (index: number) => {
     updateMarketText(exampleTexts[index]);
+    // Small delay to ensure state is updated before analysis
+    setTimeout(() => {
+      analyzeText();
+    }, 100);
   };
 
   return (
@@ -77,9 +81,9 @@ const SentimentAnalysis: React.FC = () => {
                     {analysisPending && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
                     Analyze Sentiment
                   </Button>
-                  <Button variant="outline" onClick={() => loadExampleText(0)}>Example Positive</Button>
-                  <Button variant="outline" onClick={() => loadExampleText(1)}>Example Negative</Button>
-                  <Button variant="outline" onClick={() => loadExampleText(2)}>Example Neutral</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>Example Positive</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>Example Negative</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>Example Neutral</Button>
                 </div>
               </div>
             </CardContent>
