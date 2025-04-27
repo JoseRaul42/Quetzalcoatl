@@ -31,9 +31,9 @@ const SentimentAnalysis: React.FC = () => {
   };
   
   const exampleTexts = [
-    "Latest crypto exchange reports show record-breaking trading volumes and new user signups across major platforms.",
-    "Recent regulatory changes impact cryptocurrency markets as global authorities implement stringent oversight measures.",
-    "Bitcoin's price fluctuates within a narrow range as market participants await key economic data releases."
+    "U.S. Treasury Announces Framework to Integrate Stablecoins into Traditional Banking System, Citing Economic Innovation Benefits",
+    "Federal Reserve Reaffirms No Immediate Plans to Change Cryptocurrency Policy Amid Ongoing Regulatory Discussions",
+    "SEC Proposes New Rules Restricting Access to Decentralized Exchanges, Sending Shockwaves Through Crypto Markets"
   ];
   
   const loadExampleAndAnalyze = async (index: number) => {
@@ -80,9 +80,9 @@ const SentimentAnalysis: React.FC = () => {
                     {analysisPending && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
                     Analyze Sentiment
                   </Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>Example 1</Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>Example 2</Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>Example 3</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>🟢 Positive:</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>⚪ Neutral:</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>🔴 Negative:</Button>
                 </div>
               </div>
             </CardContent>

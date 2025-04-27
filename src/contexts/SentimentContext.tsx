@@ -50,7 +50,7 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           messages: [
             {
               role: "system",
-              content: "You are a market sentiment analyzer. You must respond with ONLY ONE of these exact words: 'positive', 'negative', or 'neutral'."
+              content: "You are a financial sentiment analysis model specializing in cryptocurrency markets. Analyze the following news in the context of its impact on the crypto market specifically in relation to U.S. government actions, policies, regulations, or statements. Based solely on the likely market reaction, respond with only one word, using one of the following exact options: 'positive', 'negative', or 'neutral'. Do not provide any explanation or additional output."
             },
             {
               role: "user",
