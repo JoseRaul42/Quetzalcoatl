@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "sonner";
 import axios from 'axios';
@@ -24,22 +23,11 @@ interface ApiContextType {
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [krakenApiKey, setKrakenApiKey] = useState<string>(() => {
-    return localStorage.getItem('krakenApiKey') || '';
-  });
-  
-  const [krakenApiSecret, setKrakenApiSecret] = useState<string>(() => {
-    return localStorage.getItem('krakenApiSecret') || '';
-  });
-  
-  const [sqlConnection, setSqlConnection] = useState<string>(() => {
-    return localStorage.getItem('sqlConnection') || '';
-  });
-  
-  const [llamaApiUrl, setLlamaApiUrl] = useState<string>(() => {
-    return localStorage.getItem('llamaApiUrl') || 'http://localhost:8000/v1/chat';
-  });
-  
+  const [krakenApiKey, setKrakenApiKey] = useState<string>(() => localStorage.getItem('krakenApiKey') || '');
+  const [krakenApiSecret, setKrakenApiSecret] = useState<string>(() => localStorage.getItem('krakenApiSecret') || '');
+  const [sqlConnection, setSqlConnection] = useState<string>(() => localStorage.getItem('sqlConnection') || '');
+  const [llamaApiUrl, setLlamaApiUrl] = useState<string>(() => localStorage.getItem('llamaApiUrl') || 'http://localhost:8000/v1/chat/completions');
+
   const [connectionStatus, setConnectionStatus] = useState({
     kraken: 'disconnected' as ConnectionStatus,
     database: 'disconnected' as ConnectionStatus,
@@ -66,48 +54,58 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const testConnection = async (type: 'kraken' | 'database' | 'llama'): Promise<boolean> => {
     try {
       setConnectionStatus(prev => ({ ...prev, [type]: 'connecting' }));
-      
+
       if (type === 'llama') {
-        // Test actual LLaMA API connection
         try {
-          // Send a simple health check request to the LLaMA API
-          const response = await axios.get(
-            new URL('/v1/health', llamaApiUrl).toString(), 
+          const response = await axios.post(
+            `${llamaApiUrl}`,
+            {
+              model: 'llama',
+              messages: [
+                { role: 'system', content: 'You are a helpful assistant.' },
+                { role: 'user', content: 'Say hello' },
+              ],
+              max_tokens: 5,
+              temperature: 0.5,
+            },
             { timeout: 5000 }
           );
-          
+
           const success = response.status === 200;
-          
+
           if (success) {
             setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
             toast.success(`LLaMA API connection successful`);
             return true;
           } else {
             setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
-            toast.error(`LLaMA API connection failed: ${response.status}`);
+            toast.error(`LLaMA API returned status: ${response.status}`);
             return false;
           }
         } catch (error) {
           console.error('LLaMA API connection error:', error);
           setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
-          toast.error(`LLaMA API connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          toast.error(
+            `LLaMA API connection error: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`
+          );
           return false;
         }
+      }
+
+      // Fallback for kraken/database
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const success = Math.random() > 0.3; // simulate
+
+      if (success) {
+        setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} connection successful`);
+        return true;
       } else {
-        // Simulated connection test for other connections - would be replaced with actual API calls
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        const success = Math.random() > 0.3; // Simulate success/failure
-        
-        if (success) {
-          setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
-          toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} connection successful`);
-          return true;
-        } else {
-          setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
-          toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} connection failed`);
-          return false;
-        }
+        setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
+        toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} connection failed`);
+        return false;
       }
     } catch (error) {
       setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
@@ -117,7 +115,6 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
-    // Reset statuses when credentials change
     setConnectionStatus({
       kraken: krakenApiKey && krakenApiSecret ? 'disconnected' : 'error',
       database: sqlConnection ? 'disconnected' : 'error',
@@ -142,6 +139,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useApi = (): ApiContextType => {
   const context = useContext(ApiContext);
   if (context === undefined) {
