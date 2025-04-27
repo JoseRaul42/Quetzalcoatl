@@ -29,6 +29,11 @@ export interface TradeLog {
   paperMode: boolean;
 }
 
+export interface PortfolioHolding {
+  pair: TradingPair;
+  usdValue: number;
+}
+
 interface TradingContextType {
   selectedPair: TradingPair;
   dataMode: DataMode;
@@ -46,6 +51,8 @@ interface TradingContextType {
     lastUpdated: Date | null;
   };
   isConnected: boolean;
+  portfolioHoldings: PortfolioHolding[];
+  totalPortfolioValue: number;
   updatePair: (pair: TradingPair) => void;
   updateDataMode: (mode: DataMode) => void;
   updateRefreshRate: (rate: number) => void;
@@ -55,6 +62,7 @@ interface TradingContextType {
   toggleVerboseLogging: () => void;
   connectToMarket: () => Promise<void>;
   disconnectFromMarket: () => void;
+  updatePortfolioValue: (value: number) => void;
 }
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
@@ -90,6 +98,9 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     low24h: null as number | null,
     lastUpdated: null as Date | null,
   });
+  
+  const [portfolioHoldings, setPortfolioHoldings] = useState<PortfolioHolding[]>([]);
+  const [totalPortfolioValue, setTotalPortfolioValue] = useState<number>(100000); // Default $100k portfolio
   
   const updatePair = (pair: TradingPair) => {
     setSelectedPair(pair);
@@ -129,6 +140,10 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setVerboseLogging(prev => !prev);
   };
   
+  const updatePortfolioValue = (value: number) => {
+    setTotalPortfolioValue(value);
+  };
+  
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     
@@ -158,41 +173,70 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
         
         if (autoTrading) {
+          const currentHolding = portfolioHoldings.find(h => h.pair === selectedPair);
+          const currentAllocation = currentHolding ? (currentHolding.usdValue / totalPortfolioValue) * 100 : 0;
+          
           if (newVolume > tradeRules.volumeThreshold) {
-            const tradeAmount = Math.min(
-              Math.random() * tradeRules.maxUsdPerTrade,
-              (newPrice * tradeRules.portfolioPercentage / 100)
-            );
+            const maxAllowedPurchase = (tradeRules.portfolioPercentage / 100) * totalPortfolioValue;
             
-            if (tradeAmount >= tradeRules.minUsdThreshold) {
-              const newLog: TradeLog = {
-                id: Date.now().toString(),
-                timestamp: new Date(),
-                pair: selectedPair,
-                volumeChecked: newVolume,
-                sentiment: tradeRules.sentiment,
-                action: 'buy',
-                usdAmount: tradeAmount,
-                paperMode: paperTrading,
-              };
-              
-              setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
-              
-              if (verboseLogging) {
-                console.log(`Buy executed: $${tradeAmount.toFixed(2)} of ${selectedPair}`);
-              }
-              
-              toast.info(
-                `BUY $${tradeAmount.toFixed(2)} of ${selectedPair}`,
-                { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
+            if (currentAllocation < tradeRules.portfolioPercentage) {
+              const remainingAllowedValue = maxAllowedPurchase - (currentHolding?.usdValue || 0);
+              const tradeAmount = Math.min(
+                Math.random() * tradeRules.maxUsdPerTrade,
+                remainingAllowedValue
               );
+              
+              if (tradeAmount >= tradeRules.minUsdThreshold) {
+                const newLog: TradeLog = {
+                  id: Date.now().toString(),
+                  timestamp: new Date(),
+                  pair: selectedPair,
+                  volumeChecked: newVolume,
+                  sentiment: tradeRules.sentiment,
+                  action: 'buy',
+                  usdAmount: tradeAmount,
+                  paperMode: paperTrading,
+                };
+                
+                setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
+                
+                setPortfolioHoldings(prev => {
+                  const holdings = [...prev];
+                  const holdingIndex = holdings.findIndex(h => h.pair === selectedPair);
+                  
+                  if (holdingIndex >= 0) {
+                    holdings[holdingIndex].usdValue += tradeAmount;
+                  } else {
+                    holdings.push({
+                      pair: selectedPair,
+                      usdValue: tradeAmount
+                    });
+                  }
+                  
+                  return holdings;
+                });
+                
+                if (verboseLogging) {
+                  console.log(`Buy executed: $${tradeAmount.toFixed(2)} of ${selectedPair}`);
+                  console.log(`Current allocation: ${currentAllocation.toFixed(2)}%`);
+                }
+                
+                toast.info(
+                  `BUY $${tradeAmount.toFixed(2)} of ${selectedPair}`,
+                  { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
+                );
+              }
             }
           }
           
           if (newVolume > tradeRules.sellVolumeThreshold) {
+            const currentHoldingValue = currentHolding?.usdValue || 0;
             const sellAmount = Math.min(
               Math.random() * tradeRules.maxUsdPerSell,
-              (newPrice * tradeRules.sellPortfolioPercentage / 100)
+              Math.min(
+                currentHoldingValue,
+                (tradeRules.sellPortfolioPercentage / 100) * totalPortfolioValue
+              )
             );
             
             if (sellAmount >= tradeRules.minUsdSellThreshold) {
@@ -209,8 +253,23 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
               
               setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
               
+              setPortfolioHoldings(prev => {
+                const holdings = [...prev];
+                const holdingIndex = holdings.findIndex(h => h.pair === selectedPair);
+                
+                if (holdingIndex >= 0) {
+                  holdings[holdingIndex].usdValue -= sellAmount;
+                  if (holdings[holdingIndex].usdValue <= 0) {
+                    holdings.splice(holdingIndex, 1);
+                  }
+                }
+                
+                return holdings;
+              });
+              
               if (verboseLogging) {
                 console.log(`Sell executed: $${sellAmount.toFixed(2)} of ${selectedPair}`);
+                console.log(`Remaining allocation: ${((currentHoldingValue - sellAmount) / totalPortfolioValue * 100).toFixed(2)}%`);
               }
               
               toast.info(
@@ -226,7 +285,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isConnected, refreshRate, selectedPair, autoTrading, paperTrading, tradeRules, verboseLogging, currentMarketData]);
+  }, [isConnected, refreshRate, selectedPair, autoTrading, paperTrading, tradeRules, verboseLogging, currentMarketData, portfolioHoldings, totalPortfolioValue]);
   
   const connectToMarket = async (): Promise<void> => {
     try {
@@ -257,6 +316,8 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       tradeLogs,
       currentMarketData,
       isConnected,
+      portfolioHoldings,
+      totalPortfolioValue,
       updatePair,
       updateDataMode,
       updateRefreshRate,
@@ -266,6 +327,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       toggleVerboseLogging,
       connectToMarket,
       disconnectFromMarket,
+      updatePortfolioValue,
     }}>
       {children}
     </TradingContext.Provider>
