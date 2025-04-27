@@ -40,6 +40,8 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       setAnalysisPending(true);
       toast.info('Analyzing text...');
+      
+      console.log('Sending text to analyze:', marketText);
   
       const response = await fetch('http://localhost:1234/v1/chat/completions', {
         method: 'POST',
@@ -61,11 +63,15 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
   
       if (!response.ok) {
+        console.error('API response not ok:', response.status, response.statusText);
         throw new Error('API response was not ok');
       }
   
       const data = await response.json();
+      console.log('Received response:', data);
+      
       const sentimentResponse = data.choices[0].message.content.toLowerCase().trim();
+      console.log('Parsed sentiment:', sentimentResponse);
       
       // Validate that we got one of our expected sentiments
       const validSentiments: Sentiment[] = ['positive', 'negative', 'neutral'];
