@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "sonner";
+import axios from 'axios';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -66,19 +67,47 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       setConnectionStatus(prev => ({ ...prev, [type]: 'connecting' }));
       
-      // Simulated connection test - would be replaced with actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const success = Math.random() > 0.3; // Simulate success/failure
-      
-      if (success) {
-        setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} connection successful`);
-        return true;
+      if (type === 'llama') {
+        // Test actual LLaMA API connection
+        try {
+          // Send a simple health check request to the LLaMA API
+          const response = await axios.get(
+            new URL('/v1/health', llamaApiUrl).toString(), 
+            { timeout: 5000 }
+          );
+          
+          const success = response.status === 200;
+          
+          if (success) {
+            setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
+            toast.success(`LLaMA API connection successful`);
+            return true;
+          } else {
+            setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
+            toast.error(`LLaMA API connection failed: ${response.status}`);
+            return false;
+          }
+        } catch (error) {
+          console.error('LLaMA API connection error:', error);
+          setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
+          toast.error(`LLaMA API connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          return false;
+        }
       } else {
-        setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
-        toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} connection failed`);
-        return false;
+        // Simulated connection test for other connections - would be replaced with actual API calls
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const success = Math.random() > 0.3; // Simulate success/failure
+        
+        if (success) {
+          setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
+          toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} connection successful`);
+          return true;
+        } else {
+          setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
+          toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} connection failed`);
+          return false;
+        }
       }
     } catch (error) {
       setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));

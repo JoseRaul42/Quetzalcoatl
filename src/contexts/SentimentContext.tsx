@@ -2,6 +2,8 @@
 import React, { createContext, useState, useContext } from 'react';
 import { toast } from "sonner";
 import { Sentiment } from './TradingContext';
+import { useApi } from './ApiContext';
+import axios from 'axios';
 
 interface SentimentContextType {
   marketText: string;
@@ -19,6 +21,7 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [analysisPending, setAnalysisPending] = useState<boolean>(false);
   const [analyzedSentiment, setAnalyzedSentiment] = useState<Sentiment | null>(null);
   const [lastAnalyzedText, setLastAnalyzedText] = useState<string>('');
+  const { llamaApiUrl, connectionStatus } = useApi();
 
   const updateMarketText = (text: string) => {
     setMarketText(text);
@@ -27,6 +30,11 @@ export const SentimentProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const analyzeText = async (): Promise<void> => {
     if (!marketText.trim()) {
       toast.error('Please enter a URL to scrape');
+      return;
+    }
+
+    if (connectionStatus.llama !== 'connected') {
+      toast.error('LLaMA API is not connected. Please configure and test the connection first.');
       return;
     }
   
