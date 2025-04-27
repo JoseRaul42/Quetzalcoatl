@@ -248,7 +248,7 @@ const TradingStrategy: React.FC = () => {
                   Don't execute sells below this USD amount
                 </p>
               </div>
-              
+              // TODO: need to review the sell logic here with volume. Currently it is set up with the same parameters as buying but the logic for volume should be inversed. "IF total_day_volume less than or equal to VALUE then SELL. but that is currently not the logic"
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <Label htmlFor="sell-portfolio-percent">Portfolio % to Sell: {tradeRules.sellPortfolioPercentage}%</Label>
