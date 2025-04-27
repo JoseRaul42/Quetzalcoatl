@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,9 +31,9 @@ const SentimentAnalysis: React.FC = () => {
   };
   
   const exampleTexts = [
-    "Bitcoin price surges as institutional adoption increases. Major banks announce crypto custody services, signaling mainstream acceptance.",
-    "Cryptocurrency markets crash as regulatory fears mount. Several countries announce plans to restrict crypto trading and mining operations.",
-    "Mixed signals in the crypto market as trading volumes remain stable. Analysts are divided on near-term price predictions."
+    "Latest crypto exchange reports show record-breaking trading volumes and new user signups across major platforms.",
+    "Recent regulatory changes impact cryptocurrency markets as global authorities implement stringent oversight measures.",
+    "Bitcoin's price fluctuates within a narrow range as market participants await key economic data releases."
   ];
   
   const loadExampleAndAnalyze = async (index: number) => {
