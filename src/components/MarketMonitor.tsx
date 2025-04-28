@@ -1,3 +1,5 @@
+// TODO: The goal of this UI interface should be to leverage basic indicators to confirm that Level 2 order flow data is flowing in from Kraken and show the log.
+
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

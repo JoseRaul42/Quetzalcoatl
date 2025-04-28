@@ -9,8 +9,8 @@ import { Settings, Database, Terminal, RefreshCw, MessageSquare } from "lucide-r
 
 const ConnectionPanel: React.FC = () => {
   const { 
-    krakenApiKey, 
-    krakenApiSecret, 
+    KrakenApiKey, 
+    KrakenApiSecret, 
     sqlConnection, 
     llamaApiUrl,
     connectionStatus,
@@ -20,8 +20,8 @@ const ConnectionPanel: React.FC = () => {
     testConnection
   } = useApi();
   
-  const [apiKey, setApiKey] = useState(krakenApiKey);
-  const [apiSecret, setApiSecret] = useState(krakenApiSecret);
+  const [apiKey, setApiKey] = useState(KrakenApiKey);
+  const [apiSecret, setApiSecret] = useState(KrakenApiSecret);
   const [sqlConnectionStr, setSqlConnectionStr] = useState(sqlConnection);
   const [llamaUrl, setLlamaUrl] = useState(llamaApiUrl);
   
@@ -100,12 +100,12 @@ const ConnectionPanel: React.FC = () => {
                   Save Credentials
                 </Button>
                 <Button 
-                  onClick={() => testConnection('kraken')}
+                  onClick={() => testConnection('Kraken')}
                   variant="outline" 
                   className="flex items-center"
-                  disabled={connectionStatus.kraken === 'connecting'}
+                  disabled={connectionStatus.Kraken === 'connecting'}
                 >
-                  {connectionStatus.kraken === 'connecting' && (
+                  {connectionStatus.Kraken === 'connecting' && (
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   )}
                   Test
@@ -113,8 +113,8 @@ const ConnectionPanel: React.FC = () => {
               </div>
               
               <div className="text-sm font-medium">
-                Status: <span className={getStatusColor(connectionStatus.kraken)}>
-                  {connectionStatus.kraken.charAt(0).toUpperCase() + connectionStatus.kraken.slice(1)}
+                Status: <span className={getStatusColor(connectionStatus.Kraken)}>
+                  {connectionStatus.Kraken.charAt(0).toUpperCase() + connectionStatus.Kraken.slice(1)}
                 </span>
               </div>
             </div>

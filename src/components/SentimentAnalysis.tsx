@@ -53,7 +53,7 @@ const SentimentAnalysis: React.FC = () => {
       
       <Alert>
         <AlertDescription>
-          Test LLaMA sentiment analysis on news or market commentary. Results will influence automated trading decisions.
+          The Goal of this is to be able to curate your own positive, negative and neutral examples and test your model. Does the positive example get a positive response from the model?
         </AlertDescription>
       </Alert>
       
@@ -80,9 +80,9 @@ const SentimentAnalysis: React.FC = () => {
                     {analysisPending && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
                     Analyze Sentiment
                   </Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>🟢 Positive:</Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>⚪ Neutral:</Button>
-                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>🔴 Negative:</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(0)}>🟢 Positive</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(1)}>⚪ Neutral</Button>
+                  <Button variant="outline" onClick={() => loadExampleAndAnalyze(2)}>🔴 Negative</Button>
                 </div>
               </div>
             </CardContent>

@@ -5,31 +5,31 @@ import axios from 'axios';
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 interface ApiContextType {
-  krakenApiKey: string;
-  krakenApiSecret: string;
+  KrakenApiKey: string;
+  KrakenApiSecret: string;
   sqlConnection: string;
   llamaApiUrl: string;
   connectionStatus: {
-    kraken: ConnectionStatus;
+    Kraken: ConnectionStatus;
     database: ConnectionStatus;
     llama: ConnectionStatus;
   };
   updateKrakenCredentials: (key: string, secret: string) => void;
   updateSqlConnection: (connectionString: string) => void;
   updateLlamaApiUrl: (url: string) => void;
-  testConnection: (type: 'kraken' | 'database' | 'llama') => Promise<boolean>;
+  testConnection: (type: 'Kraken' | 'database' | 'llama') => Promise<boolean>;
 }
 
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [krakenApiKey, setKrakenApiKey] = useState<string>(() => localStorage.getItem('krakenApiKey') || '');
-  const [krakenApiSecret, setKrakenApiSecret] = useState<string>(() => localStorage.getItem('krakenApiSecret') || '');
+  const [KrakenApiKey, setKrakenApiKey] = useState<string>(() => localStorage.getItem('KrakenApiKey') || '');
+  const [KrakenApiSecret, setKrakenApiSecret] = useState<string>(() => localStorage.getItem('KrakenApiSecret') || '');
   const [sqlConnection, setSqlConnection] = useState<string>(() => localStorage.getItem('sqlConnection') || '');
   const [llamaApiUrl, setLlamaApiUrl] = useState<string>(() => localStorage.getItem('llamaApiUrl') || 'http://localhost:8000/v1/chat/completions');
 
   const [connectionStatus, setConnectionStatus] = useState({
-    kraken: 'disconnected' as ConnectionStatus,
+    Kraken: 'disconnected' as ConnectionStatus,
     database: 'disconnected' as ConnectionStatus,
     llama: 'disconnected' as ConnectionStatus,
   });
@@ -37,8 +37,8 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateKrakenCredentials = (key: string, secret: string) => {
     setKrakenApiKey(key);
     setKrakenApiSecret(secret);
-    localStorage.setItem('krakenApiKey', key);
-    localStorage.setItem('krakenApiSecret', secret);
+    localStorage.setItem('KrakenApiKey', key);
+    localStorage.setItem('KrakenApiSecret', secret);
   };
 
   const updateSqlConnection = (connectionString: string) => {
@@ -51,7 +51,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('llamaApiUrl', url);
   };
 
-  const testConnection = async (type: 'kraken' | 'database' | 'llama'): Promise<boolean> => {
+  const testConnection = async (type: 'Kraken' | 'database' | 'llama'): Promise<boolean> => {
     try {
       setConnectionStatus(prev => ({ ...prev, [type]: 'connecting' }));
 
@@ -94,7 +94,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
 
-      // Fallback for kraken/database
+      // Fallback for Kraken/database
       await new Promise(resolve => setTimeout(resolve, 1500));
       const success = Math.random() > 0.3; // simulate
 
@@ -116,16 +116,16 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     setConnectionStatus({
-      kraken: krakenApiKey && krakenApiSecret ? 'disconnected' : 'error',
+      Kraken: KrakenApiKey && KrakenApiSecret ? 'disconnected' : 'error',
       database: sqlConnection ? 'disconnected' : 'error',
       llama: llamaApiUrl ? 'disconnected' : 'error',
     });
-  }, [krakenApiKey, krakenApiSecret, sqlConnection, llamaApiUrl]);
+  }, [KrakenApiKey, KrakenApiSecret, sqlConnection, llamaApiUrl]);
 
   return (
     <ApiContext.Provider value={{
-      krakenApiKey,
-      krakenApiSecret,
+      KrakenApiKey,
+      KrakenApiSecret,
       sqlConnection,
       llamaApiUrl,
       connectionStatus,

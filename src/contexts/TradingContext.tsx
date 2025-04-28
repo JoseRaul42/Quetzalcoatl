@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 
 export type TradingPair = 'BTC/USD' | 'ETH/USD' | 'XRP/USD' | 'ADA/USD' | 'SOL/USD';
@@ -67,6 +67,16 @@ interface TradingContextType {
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
+const KrakenPairMap: Record<TradingPair, string> = {
+  'BTC/USD': 'XBT/USD',
+  'ETH/USD': 'ETH/USD',
+  'XRP/USD': 'XRP/USD',
+  'ADA/USD': 'ADA/USD',
+  'SOL/USD': 'SOL/USD',
+};
+
+const Kraken_WS_URL = "wss://ws.Kraken.com/";
+
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedPair, setSelectedPair] = useState<TradingPair>('BTC/USD');
   const [dataMode, setDataMode] = useState<DataMode>('websocket');
@@ -75,7 +85,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [paperTrading, setPaperTrading] = useState<boolean>(true);
   const [verboseLogging, setVerboseLogging] = useState<boolean>(false);
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  
+
   const [tradeRules, setTradeRules] = useState<TradeRule>({
     volumeThreshold: 1000000,
     sentiment: 'positive',
@@ -88,9 +98,9 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     minUsdSellThreshold: 10,
     sellPortfolioPercentage: 5,
   });
-  
+
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
-  
+
   const [currentMarketData, setCurrentMarketData] = useState({
     price: null as number | null,
     volume24h: null as number | null,
@@ -98,10 +108,12 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     low24h: null as number | null,
     lastUpdated: null as Date | null,
   });
-  
+
   const [portfolioHoldings, setPortfolioHoldings] = useState<PortfolioHolding[]>([]);
-  const [totalPortfolioValue, setTotalPortfolioValue] = useState<number>(100000); // Default $100k portfolio
-  
+  const [totalPortfolioValue, setTotalPortfolioValue] = useState<number>(100000);
+
+  const websocketRef = useRef<WebSocket | null>(null);
+
   const updatePair = (pair: TradingPair) => {
     setSelectedPair(pair);
     if (isConnected) {
@@ -109,7 +121,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTimeout(() => connectToMarket(), 500);
     }
   };
-  
+
   const updateDataMode = (mode: DataMode) => {
     setDataMode(mode);
     if (isConnected) {
@@ -117,193 +129,94 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setTimeout(() => connectToMarket(), 500);
     }
   };
-  
+
   const updateRefreshRate = (rate: number) => {
     setRefreshRate(rate);
   };
-  
+
   const updateTradeRules = (rules: Partial<TradeRule>) => {
     setTradeRules(prev => ({ ...prev, ...rules }));
   };
-  
+
   const toggleAutoTrading = () => {
     setAutoTrading(prev => !prev);
     toast(autoTrading ? "Auto-trading disabled" : "Auto-trading enabled");
   };
-  
+
   const togglePaperTrading = () => {
     setPaperTrading(prev => !prev);
     toast(paperTrading ? "Live trading mode" : "Paper trading mode");
   };
-  
+
   const toggleVerboseLogging = () => {
     setVerboseLogging(prev => !prev);
   };
-  
+
   const updatePortfolioValue = (value: number) => {
     setTotalPortfolioValue(value);
   };
-  
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    
-    if (isConnected) {
-      interval = setInterval(() => {
-        const priceChange = (Math.random() - 0.5) * 200;
-        const newPrice = currentMarketData.price 
-          ? currentMarketData.price + priceChange
-          : 40000 + priceChange;
-        
-        const newVolume = Math.random() * 5000000 + 1000000;
-        
-        setCurrentMarketData({
-          price: newPrice,
-          volume24h: newVolume,
-          high24h: currentMarketData.high24h 
-            ? Math.max(currentMarketData.high24h, newPrice)
-            : newPrice + 500,
-          low24h: currentMarketData.low24h
-            ? Math.min(currentMarketData.low24h, newPrice)
-            : newPrice - 500,
-          lastUpdated: new Date(),
-        });
-        
-        if (verboseLogging) {
-          console.log(`[${selectedPair}] Price: $${newPrice.toFixed(2)}, Volume: $${newVolume.toFixed(2)}`);
-        }
-        
-        if (autoTrading) {
-          const currentHolding = portfolioHoldings.find(h => h.pair === selectedPair);
-          const currentAllocation = currentHolding ? (currentHolding.usdValue / totalPortfolioValue) * 100 : 0;
-          
-          if (newVolume > tradeRules.volumeThreshold) {
-            const maxAllowedPurchase = (tradeRules.portfolioPercentage / 100) * totalPortfolioValue;
-            
-            if (currentAllocation < tradeRules.portfolioPercentage) {
-              const remainingAllowedValue = maxAllowedPurchase - (currentHolding?.usdValue || 0);
-              const tradeAmount = Math.min(
-                Math.random() * tradeRules.maxUsdPerTrade,
-                remainingAllowedValue
-              );
-              
-              if (tradeAmount >= tradeRules.minUsdThreshold) {
-                const newLog: TradeLog = {
-                  id: Date.now().toString(),
-                  timestamp: new Date(),
-                  pair: selectedPair,
-                  volumeChecked: newVolume,
-                  sentiment: tradeRules.sentiment,
-                  action: 'buy',
-                  usdAmount: tradeAmount,
-                  paperMode: paperTrading,
-                };
-                
-                setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
-                
-                setPortfolioHoldings(prev => {
-                  const holdings = [...prev];
-                  const holdingIndex = holdings.findIndex(h => h.pair === selectedPair);
-                  
-                  if (holdingIndex >= 0) {
-                    holdings[holdingIndex].usdValue += tradeAmount;
-                  } else {
-                    holdings.push({
-                      pair: selectedPair,
-                      usdValue: tradeAmount
-                    });
-                  }
-                  
-                  return holdings;
-                });
-                
-                if (verboseLogging) {
-                  console.log(`Buy executed: $${tradeAmount.toFixed(2)} of ${selectedPair}`);
-                  console.log(`Current allocation: ${currentAllocation.toFixed(2)}%`);
-                }
-                
-                toast.info(
-                  `BUY $${tradeAmount.toFixed(2)} of ${selectedPair}`,
-                  { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
-                );
-              }
-            }
-          }
-          
-          if (newVolume > tradeRules.sellVolumeThreshold) {
-            const currentHoldingValue = currentHolding?.usdValue || 0;
-            const sellAmount = Math.min(
-              Math.random() * tradeRules.maxUsdPerSell,
-              Math.min(
-                currentHoldingValue,
-                (tradeRules.sellPortfolioPercentage / 100) * totalPortfolioValue
-              )
-            );
-            
-            if (sellAmount >= tradeRules.minUsdSellThreshold) {
-              const newLog: TradeLog = {
-                id: Date.now().toString(),
-                timestamp: new Date(),
-                pair: selectedPair,
-                volumeChecked: newVolume,
-                sentiment: tradeRules.sellSentiment,
-                action: 'sell',
-                usdAmount: sellAmount,
-                paperMode: paperTrading,
-              };
-              
-              setTradeLogs(prev => [newLog, ...prev].slice(0, 100));
-              
-              setPortfolioHoldings(prev => {
-                const holdings = [...prev];
-                const holdingIndex = holdings.findIndex(h => h.pair === selectedPair);
-                
-                if (holdingIndex >= 0) {
-                  holdings[holdingIndex].usdValue -= sellAmount;
-                  if (holdings[holdingIndex].usdValue <= 0) {
-                    holdings.splice(holdingIndex, 1);
-                  }
-                }
-                
-                return holdings;
-              });
-              
-              if (verboseLogging) {
-                console.log(`Sell executed: $${sellAmount.toFixed(2)} of ${selectedPair}`);
-                console.log(`Remaining allocation: ${((currentHoldingValue - sellAmount) / totalPortfolioValue * 100).toFixed(2)}%`);
-              }
-              
-              toast.info(
-                `SELL $${sellAmount.toFixed(2)} of ${selectedPair}`,
-                { description: paperTrading ? "Paper Trading Mode" : "LIVE TRADING" }
-              );
-            }
-          }
-        }
-      }, refreshRate);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isConnected, refreshRate, selectedPair, autoTrading, paperTrading, tradeRules, verboseLogging, currentMarketData, portfolioHoldings, totalPortfolioValue]);
-  
+
   const connectToMarket = async (): Promise<void> => {
     try {
-      toast.info(`Connecting to ${selectedPair} market...`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsConnected(true);
-      toast.success(`Connected to ${selectedPair} market`);
+      const KrakenPair = KrakenPairMap[selectedPair];
+      const ws = new WebSocket(Kraken_WS_URL);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          event: "subscribe",
+          pair: [KrakenPair],
+          subscription: { name: "ticker" },
+        }));
+        setIsConnected(true);
+        toast.success(`WebSocket connected to ${KrakenPair}`);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (Array.isArray(data) && data[1]?.c) {
+          const [ , ticker ] = data;
+          const price = parseFloat(ticker.c[0]);
+          const volume24h = parseFloat(ticker.v[1]);
+
+          setCurrentMarketData(prev => ({
+            ...prev,
+            price,
+            volume24h,
+            lastUpdated: new Date(),
+          }));
+
+          if (verboseLogging) {
+            console.log(`[Kraken WS] ${KrakenPair} price: $${price}, volume: $${volume24h}`);
+          }
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        toast.error("Kraken WebSocket error");
+      };
+
+      ws.onclose = () => {
+        setIsConnected(false);
+        toast.info(`WebSocket closed for ${KrakenPair}`);
+      };
+
+      websocketRef.current = ws;
     } catch (error) {
-      console.error('Failed to connect to market:', error);
-      toast.error(`Failed to connect to ${selectedPair} market`);
+      console.error('Failed to connect to Kraken WS:', error);
+      toast.error(`Failed to connect to ${selectedPair} WebSocket`);
     }
   };
-  
+
   const disconnectFromMarket = () => {
+    if (websocketRef.current) {
+      websocketRef.current.close();
+      websocketRef.current = null;
+    }
     setIsConnected(false);
     toast.info(`Disconnected from ${selectedPair} market`);
   };
-  
+
   return (
     <TradingContext.Provider value={{
       selectedPair,
