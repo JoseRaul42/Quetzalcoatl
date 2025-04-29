@@ -68,12 +68,12 @@ const ConnectionPanel: React.FC = () => {
               Kraken API Configuration
             </CardTitle>
             <CardDescription>
-              Configure your Kraken API access for trading operations
+              Configure your API key and API secret in the .env file
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="api-key">API Key</Label>
                 <Input 
                   id="api-key"
@@ -93,16 +93,16 @@ const ConnectionPanel: React.FC = () => {
                   onChange={(e) => setApiSecret(e.target.value)}
                   placeholder="Enter your Kraken API secret"
                 />
-              </div>
+              </div> */}
               
               <div className="flex space-x-2">
-                <Button onClick={handleSaveKraken} className="flex-1">
+                {/* <Button onClick={handleSaveKraken} className="flex-1">
                   Save Credentials
-                </Button>
-                <Button 
+                </Button> */}
+                <Button className="flex-1"
                   onClick={() => testConnection('Kraken')}
                   variant="outline" 
-                  className="flex items-center"
+                  //className="flex items-center"
                   disabled={connectionStatus.Kraken === 'connecting'}
                 >
                   {connectionStatus.Kraken === 'connecting' && (
