@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -26,40 +27,78 @@ app.post('/api/test-kraken', async (req, res) => {
   }
 });
 
-// ✅ NEW: Route to pull trades + orderbook for order flow analysis
+// Enhanced route to pull trades + orderbook for order flow analysis
 app.get('/api/kraken-orderflow', async (req, res) => {
   const { pair = 'BTCUSD', depthCount = 25 } = req.query;
   console.log(`[Backend] Requesting orderflow data for pair: ${pair}`);
   console.log('[Backend] Query Parameters:', req.query);
 
   try {
-    // Fetch recent trades
-    const tradesResponse = await axios.get(`https://api.kraken.com/0/public/Trades?pair=${pair}`);
+    // Fetch recent trades with more data (limit=100)
+    const tradesResponse = await axios.get(`https://api.kraken.com/0/public/Trades?pair=${pair}&count=100`);
     const tradesResult = tradesResponse.data.result;
     const tradesKey = Object.keys(tradesResult).find(key => key !== 'last');
     const tradesData = tradesResult[tradesKey];
 
-    // Fetch order book depth
+    // Fetch order book with more depth for better visualization
     const depthResponse = await axios.get(`https://api.kraken.com/0/public/Depth?pair=${pair}&count=${depthCount}`);
     const depthResult = depthResponse.data.result;
     const depthKey = Object.keys(depthResult)[0];
     const depthData = depthResult[depthKey];
 
-    // Log fetched data
-    console.log(`[Backend] Trades Data for ${pair}:`, tradesData);
-    console.log(`[Backend] Order Book Depth Data for ${pair}:`, depthData);
+    // Fetch ticker data for additional market info
+    const tickerResponse = await axios.get(`https://api.kraken.com/0/public/Ticker?pair=${pair}`);
+    const tickerResult = tickerResponse.data.result;
+    const tickerKey = Object.keys(tickerResult)[0];
+    const tickerData = tickerResult[tickerKey];
 
-    res.status(200).json({
+    // Process and enhance the data
+    const enhancedData = {
       success: true,
       pair,
       krakenPair: tradesKey,
       fetchedAt: new Date().toISOString(),
       trades: tradesData,
-      orderbook: depthData
-    });
+      orderbook: depthData,
+      ticker: {
+        ask: parseFloat(tickerData?.a?.[0] || 0),
+        bid: parseFloat(tickerData?.b?.[0] || 0),
+        last: parseFloat(tickerData?.c?.[0] || 0),
+        volume: parseFloat(tickerData?.v?.[1] || 0),
+        volumeWeightedAvgPrice: parseFloat(tickerData?.p?.[1] || 0),
+        high: parseFloat(tickerData?.h?.[1] || 0),
+        low: parseFloat(tickerData?.l?.[1] || 0),
+      },
+      // Calculate basic order flow metrics
+      metrics: {
+        buyVolume: tradesData
+          .filter(trade => trade[3] === 'b')
+          .reduce((sum, trade) => sum + parseFloat(trade[1]), 0),
+        sellVolume: tradesData
+          .filter(trade => trade[3] === 's')
+          .reduce((sum, trade) => sum + parseFloat(trade[1]), 0),
+        bidWallsCount: depthData.bids
+          .filter(bid => parseFloat(bid[1]) > 5)
+          .length,
+        askWallsCount: depthData.asks
+          .filter(ask => parseFloat(ask[1]) > 5)
+          .length,
+      }
+    };
+
+    // Log summary of fetched data
+    console.log(`[Backend] Fetched ${tradesData.length} trades and ${depthData.asks.length + depthData.bids.length} orderbook levels for ${pair}`);
+    console.log('[Backend] Order flow metrics:', enhancedData.metrics);
+
+    res.status(200).json(enhancedData);
   } catch (error) {
     console.error('[Backend] Error fetching Kraken orderflow data:', error?.response?.data || error.message);
-    res.status(500).json({ success: false, message: 'Kraken API error', details: error?.response?.data || error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Kraken API error', 
+      details: error?.response?.data || error.message,
+      path: error?.request?.path || 'unknown'
+    });
   }
 });
 

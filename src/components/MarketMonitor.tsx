@@ -1,16 +1,18 @@
-// TODO: The goal of this UI interface should be to leverage basic indicators to confirm that Level 2 order flow data is flowing in from Kraken and show the log.
 
-
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import { BarChart, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { BarChart, TrendingUp, TrendingDown, RefreshCw, ChartBar, Gauge } from "lucide-react";
 import { useTrading, TradingPair, DataMode } from "@/contexts/TradingContext";
+import { OrderBookChart } from "@/components/charts/OrderBookChart";
+import { VolumeTimeChart } from "@/components/charts/VolumeTimeChart";
+import { SentimentGauge } from "@/components/charts/SentimentGauge";
+import axios from 'axios';
+import { toast } from "sonner";
 
 const MarketMonitor: React.FC = () => {
   const { 
@@ -26,9 +28,25 @@ const MarketMonitor: React.FC = () => {
     disconnectFromMarket
   } = useTrading();
   
+  const [orderBookData, setOrderBookData] = useState<{
+    asks: [number, number][];
+    bids: [number, number][];
+  }>({ asks: [], bids: [] });
+  
+  const [tradesData, setTradesData] = useState<{
+    time: number;
+    price: number;
+    volume: number;
+    side: 'buy' | 'sell';
+  }[]>([]);
+  
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+  
   const tradingPairs = ['BTC/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'SOL/USD'];
   const dataModes = ['websocket', 'rest'];
   
+  // Format utility functions
   const formatCurrency = (value: number | null) => {
     if (value === null) return 'N/A';
     return new Intl.NumberFormat('en-US', {
@@ -55,9 +73,86 @@ const MarketMonitor: React.FC = () => {
   
   const getPriceChangeClass = () => {
     if (!currentMarketData.price) return 'text-neutral';
-    const previousPrice = (currentMarketData.price || 0) - (Math.random() - 0.5) * 100; // Simulate previous price
+    const previousPrice = (currentMarketData.price || 0) - (Math.random() - 0.5) * 100;
     return previousPrice < currentMarketData.price ? 'text-profit' : 'text-loss';
   };
+  
+  // Calculate market sentiment based on trade data
+  const marketSentiment = useMemo(() => {
+    if (!tradesData.length) return 0.5; // Neutral
+    
+    const buyVolume = tradesData
+      .filter(trade => trade.side === 'buy')
+      .reduce((sum, trade) => sum + trade.volume, 0);
+      
+    const totalVolume = tradesData.reduce((sum, trade) => sum + trade.volume, 0);
+    
+    return totalVolume > 0 ? buyVolume / totalVolume : 0.5;
+  }, [tradesData]);
+  
+  // Fetch order flow data from backend
+  const fetchOrderFlowData = async () => {
+    if (isFetching || !isConnected) return;
+    
+    try {
+      setIsFetching(true);
+      // Convert pair format for API (e.g., BTC/USD -> BTCUSD)
+      const krakenPair = selectedPair.replace('/', '');
+      
+      const response = await axios.get(`http://localhost:5000/api/kraken-orderflow?pair=${krakenPair}`);
+      
+      if (response.data.success) {
+        // Transform order book data for visualization
+        const { orderbook, trades } = response.data;
+        
+        // Update order book data
+        setOrderBookData({
+          asks: orderbook.asks.map((ask: string[]) => [parseFloat(ask[0]), parseFloat(ask[1])]),
+          bids: orderbook.bids.map((bid: string[]) => [parseFloat(bid[0]), parseFloat(bid[1])])
+        });
+        
+        // Transform and append trades data
+        const newTrades = trades.slice(0, 100).map((trade: any[]) => ({
+          time: trade[2],
+          price: parseFloat(trade[0]),
+          volume: parseFloat(trade[1]),
+          side: trade[3] === 'b' ? 'buy' : 'sell'
+        }));
+        
+        setTradesData(prev => {
+          const combined = [...newTrades, ...prev].slice(0, 200);
+          // Sort by time descending
+          return combined.sort((a, b) => b.time - a.time);
+        });
+        
+        setLastFetchTime(new Date());
+        toast.success('Order flow data refreshed');
+      }
+    } catch (error) {
+      console.error('Error fetching order flow data:', error);
+      toast.error('Failed to fetch order flow data');
+    } finally {
+      setIsFetching(false);
+    }
+  };
+  
+  // Set up interval to fetch data based on refreshRate
+  useEffect(() => {
+    if (!isConnected || dataMode !== 'rest') return;
+    
+    fetchOrderFlowData();
+    const interval = setInterval(fetchOrderFlowData, refreshRate);
+    
+    return () => clearInterval(interval);
+  }, [isConnected, refreshRate, selectedPair, dataMode]);
+  
+  // Clear data when disconnecting
+  useEffect(() => {
+    if (!isConnected) {
+      setOrderBookData({ asks: [], bids: [] });
+      setTradesData([]);
+    }
+  }, [isConnected]);
 
   return (
     <div className="grid gap-6">
@@ -152,7 +247,7 @@ const MarketMonitor: React.FC = () => {
             <CardTitle className="flex items-center justify-between">
               <span>Live Market Data</span>
               {isConnected && (
-                <RefreshCw className="h-4 w-4 animate-spin-slow text-primary" />
+                <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : 'animate-spin-slow'} text-primary`} />
               )}
             </CardTitle>
             <CardDescription>
@@ -215,21 +310,88 @@ const MarketMonitor: React.FC = () => {
         </Card>
       </div>
       
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ChartBar className="h-4 w-4" />
+              Order Book Depth
+            </CardTitle>
+            <CardDescription>
+              Visualization of buy and sell orders at different price levels
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            {!isConnected ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Connect to market to view order book</p>
+              </div>
+            ) : orderBookData.asks.length === 0 && orderBookData.bids.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading order book data...</p>
+              </div>
+            ) : (
+              <OrderBookChart data={orderBookData} />
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Trade Volume History
+            </CardTitle>
+            <CardDescription>
+              Recent trading volume by time
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            {!isConnected ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Connect to market to view trade history</p>
+              </div>
+            ) : tradesData.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading trade history data...</p>
+              </div>
+            ) : (
+              <VolumeTimeChart data={tradesData} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
       <Card>
         <CardHeader>
-          <CardTitle>Market History</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Gauge className="h-4 w-4" />
+            Market Sentiment Analyzer
+          </CardTitle>
           <CardDescription>
-            Interactive price chart would appear here in the full implementation
+            Real-time market sentiment based on order flow
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="bg-chart-bg p-4 rounded-lg h-64 flex items-center justify-center">
-            <p className="text-muted-foreground">
-              Price chart visualization (would be implemented with Recharts or a similar library)
-            </p>
-          </div>
+        <CardContent className="h-64">
+          {!isConnected ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Connect to market to view sentiment analysis</p>
+            </div>
+          ) : tradesData.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">Gathering data for sentiment analysis...</p>
+            </div>
+          ) : (
+            <SentimentGauge value={marketSentiment} />
+          )}
         </CardContent>
       </Card>
+      
+      <div className="text-xs text-muted-foreground">
+        {lastFetchTime && (
+          <div>Last data refresh: {lastFetchTime.toLocaleString()}</div>
+        )}
+      </div>
     </div>
   );
 };
