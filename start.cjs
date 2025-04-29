@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 
 // Start the backend server
-const backend = spawn('node', ['./src/routes/kraken-test.js'], {
+const backend = spawn('node', ['./src/routes/kraken.js'], {
   stdio: 'inherit',
   shell: true,
 });
