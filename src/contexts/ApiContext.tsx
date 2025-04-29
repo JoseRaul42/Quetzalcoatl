@@ -23,8 +23,12 @@ interface ApiContextType {
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [KrakenApiKey, setKrakenApiKey] = useState<string>(() => localStorage.getItem('KrakenApiKey') || '');
-  const [KrakenApiSecret, setKrakenApiSecret] = useState<string>(() => localStorage.getItem('KrakenApiSecret') || '');
+  const [KrakenApiKey, setKrakenApiKey] = useState<string>(() => 
+    import.meta.env.VITE_KRAKEN_API_KEY || localStorage.getItem('KrakenApiKey') || ''
+  );
+  const [KrakenApiSecret, setKrakenApiSecret] = useState<string>(() => 
+    import.meta.env.VITE_KRAKEN_PRIVATE_KEY || localStorage.getItem('KrakenApiSecret') || ''
+  );
   const [sqlConnection, setSqlConnection] = useState<string>(() => localStorage.getItem('sqlConnection') || '');
   const [llamaApiUrl, setLlamaApiUrl] = useState<string>(() => localStorage.getItem('llamaApiUrl') || 'http://localhost:8000/v1/chat/completions');
 
@@ -55,10 +59,35 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       setConnectionStatus(prev => ({ ...prev, [type]: 'connecting' }));
 
+      if (type === 'Kraken') {
+        try {
+          console.log('[Kraken Test] Sending request to backend route http://localhost:5000/api/kraken-test...');
+          const response = await axios.post('http://localhost:5000/api/test-kraken');
+
+      
+          console.log('[Kraken Test] Response from backend:', response.data);
+      
+          if (response.data.success) {
+            toast.success('Kraken API connection successful');
+            setConnectionStatus(prev => ({ ...prev, Kraken: 'connected' }));
+            return true;
+          } else {
+            console.error('[Kraken Test] Backend returned failure:', response.data);
+            throw new Error('Backend returned failure');
+          }
+        } catch (error) {
+          console.error('[Kraken Test] Backend call failed:', error);
+          toast.error(`Kraken API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setConnectionStatus(prev => ({ ...prev, Kraken: 'error' }));
+          return false;
+        }
+      }
+      
+
       if (type === 'llama') {
         try {
           const response = await axios.post(
-            `${llamaApiUrl}`,
+            llamaApiUrl,
             {
               model: 'llama',
               messages: [
@@ -74,39 +103,36 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const success = response.status === 200;
 
           if (success) {
-            setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
-            toast.success(`LLaMA API connection successful`);
+            setConnectionStatus(prev => ({ ...prev, llama: 'connected' }));
+            toast.success('LLaMA API connection successful');
             return true;
           } else {
-            setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
+            setConnectionStatus(prev => ({ ...prev, llama: 'error' }));
             toast.error(`LLaMA API returned status: ${response.status}`);
             return false;
           }
         } catch (error) {
           console.error('LLaMA API connection error:', error);
-          setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
-          toast.error(
-            `LLaMA API connection error: ${
-              error instanceof Error ? error.message : 'Unknown error'
-            }`
-          );
+          setConnectionStatus(prev => ({ ...prev, llama: 'error' }));
+          toast.error(`LLaMA API connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
           return false;
         }
       }
 
-      // Fallback for Kraken/database
+      // Fallback for database simulation
       await new Promise(resolve => setTimeout(resolve, 1500));
-      const success = Math.random() > 0.3; // simulate
+      const success = Math.random() > 0.3;
 
       if (success) {
-        setConnectionStatus(prev => ({ ...prev, [type]: 'connected' }));
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} connection successful`);
+        setConnectionStatus(prev => ({ ...prev, database: 'connected' }));
+        toast.success('Database connection successful');
         return true;
       } else {
-        setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
-        toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} connection failed`);
+        setConnectionStatus(prev => ({ ...prev, database: 'error' }));
+        toast.error('Database connection failed');
         return false;
       }
+
     } catch (error) {
       setConnectionStatus(prev => ({ ...prev, [type]: 'error' }));
       toast.error(`${type.charAt(0).toUpperCase() + type.slice(1)} connection error: ${error}`);
