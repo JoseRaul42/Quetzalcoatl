@@ -68,7 +68,9 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
               <Label
                 content={({ viewBox }) => {
                   if (!viewBox) return null;
-                  const { cx, cy } = viewBox;
+                  // Explicitly type and access viewBox properties
+                  const cx = typeof viewBox === 'object' && 'cx' in viewBox ? viewBox.cx : 0;
+                  const cy = typeof viewBox === 'object' && 'cy' in viewBox ? viewBox.cy : 0;
                   return (
                     <>
                       <text 
