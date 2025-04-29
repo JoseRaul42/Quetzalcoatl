@@ -61,7 +61,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (type === 'Kraken') {
         try {
-          console.log('[Kraken Test] Sending request to backend route http://localhost:5000/api/kraken-test...');
+          console.log('[Kraken Test] Sending request to backend route http://localhost:5000/api/kraken...');
           const response = await axios.post('http://localhost:5000/api/test-kraken');
 
       
