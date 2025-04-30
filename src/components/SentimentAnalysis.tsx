@@ -122,8 +122,7 @@ const SentimentAnalysis: React.FC = () => {
                 </div>
                 
                 <div className="text-xs text-muted-foreground">
-                  <p>In production, detailed sentiment analysis metrics would be shown here, including confidence scores and key sentiment drivers detected by the LLM.</p>
-                </div>
+             </div>
               </div>
             )}
           </CardContent>

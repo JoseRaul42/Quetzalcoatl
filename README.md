@@ -1,6 +1,6 @@
 # 🐍 Quetzalcoatl
 
-**Quetzalcoatl** is a real-time LFT (Low-Frequency Trading) order flow and sentiment analysis trading interface project.
+**Quetzalcoatl** is a Locally hosted web app UI for real-time LFT (Low-Frequency Trading) order flow and sentiment analysis trading interface project.
 
 Here is live data being fed through a websocket feed for real time order data flow.
 ![Order Flow Chart](./public/OrderflowVisualizations.PNG)
@@ -48,6 +48,11 @@ Start the development server:
 npm run dev
 ```
 Make sure your local LLM server is running on port 5000, and that your .env file includes your Kraken API credentials.
+
+After connecting you will be able to connect your local llm server with a model of your choosing and perform sentiment analysis in a automated way privately and for free.
+
+![Sentiment analysis Testing](./public/SentimentAnalysis.PNG)
+
 
 
 ## 📄 Environment Variables
