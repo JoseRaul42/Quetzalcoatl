@@ -1,4 +1,4 @@
-# 🐍 Quetzalcoatl
+# 🐉 Quetzalcoatl
 
 **Quetzalcoatl** is a Locally hosted web app UI for real-time LFT (Low-Frequency Trading) order flow and sentiment analysis trading interface project.
 
