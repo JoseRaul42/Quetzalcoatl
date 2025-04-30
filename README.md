@@ -2,7 +2,7 @@
 
 **Quetzalcoatl** is a Locally hosted web app UI for LFT (Low-Frequency Trading) order flow and sentiment analysis trading strategies.
 
-abscreen shot of data being pulled in through the REST api to visualize order data flow.
+Screen shot of data being pulled in through the REST api to visualize order data flow.
 ![Order Flow Chart](./public/OrderflowVisualizations.PNG)
 
 Built using **React**, **Vite**, and **TypeScript**, this application serves as both a live trading dashboard and strategy testing ground.
