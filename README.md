@@ -1,6 +1,9 @@
 # 🐍 Quetzalcoatl
 
-**Quetzalcoatl** is a real-time LFT (Low-Frequency Trading) order flow and sentiment analysis trading interface designed to support dynamic decision-making for automated trading bots. This UI enables real-time visualization and control over trade actions (buy/sell) based on configurable risk and strategy parameters tailored to your portfolio.
+**Quetzalcoatl** is a real-time LFT (Low-Frequency Trading) order flow and sentiment analysis trading interface project.
+
+Here is live data being fed through a websocket feed for real time order data flow.
+![Order Flow Chart](./public/OrderflowVisualizations.PNG)
 
 Built using **React**, **Vite**, and **TypeScript**, this application serves as both a live trading dashboard and strategy testing ground.
 
@@ -55,3 +58,8 @@ Create a .env.local file in the root directory and add the following:
 VITE_KRAKEN_API_KEY=your_kraken_api_key
 VITE_KRAKEN_API_SECRET=your_kraken_api_secret
 ```
+
+After setting up you kraken api key and secret make sure to test the connection with a get request of the time.
+
+![Connection Testing](./public/Connectionsettings.PNG)
+
