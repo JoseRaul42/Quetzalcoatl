@@ -1,73 +1,57 @@
-# Welcome to your Lovable project
+# 🐍 Quetzalcoatl
 
-## Project info
+**Quetzalcoatl** is a real-time LFT (Low-Frequency Trading) order flow and sentiment analysis trading interface designed to support dynamic decision-making for automated trading bots. This UI enables real-time visualization and control over trade actions (buy/sell) based on configurable risk and strategy parameters tailored to your portfolio.
 
-**URL**: https://lovable.dev/projects/32d10895-3beb-4345-88dd-398d7e6aa0f5
+Built using **React**, **Vite**, and **TypeScript**, this application serves as both a live trading dashboard and strategy testing ground.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🔧 Prerequisites
 
-**Use Lovable**
+To run this project locally, you will need:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/32d10895-3beb-4345-88dd-398d7e6aa0f5) and start prompting.
+- **Node.js (>= 18.x)** and **npm**
+- **Kraken API Key and Secret**
+  - Create or manage your API key at [https://www.kraken.com/u/security/api](https://www.kraken.com/u/security/api)
+- **A locally hosted LLM server** for sentiment analysis
+  - Expected to be available at `http://localhost:5000`
+  - Accepts POST requests with market commentary or parsed trade sentiment input
+- **Basic understanding of your portfolio's risk profile and trading strategy**
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 📦 Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React + Vite + TypeScript
+- **Data**: Kraken REST/WebSocket APIs
+- **NLP Analysis**: Local LLM service (port 5000)
+- **Icons/UI**: [Lucide React](https://lucide.dev/), Tailwind CSS (optional)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🚀 Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Clone the repo and install dependencies:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+git clone https://github.com/your-username/quetzalcoatl-trading-ui.git
+cd quetzalcoatl-trading-ui
+npm install
 ```
 
-**Edit a file directly in GitHub**
+Start the development server:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run dev
+```
+Make sure your local LLM server is running on port 5000, and that your .env file includes your Kraken API credentials.
 
-**Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📄 Environment Variables
 
-## What technologies are used for this project?
+Create a .env.local file in the root directory and add the following:
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/32d10895-3beb-4345-88dd-398d7e6aa0f5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+VITE_KRAKEN_API_KEY=your_kraken_api_key
+VITE_KRAKEN_API_SECRET=your_kraken_api_secret
+```
