@@ -45,7 +45,7 @@ npm install
 Start the development server:
 
 ```bash
-npm run dev
+node start.cjs
 ```
 Make sure your local LLM server is running on port 5000, and that your .env file includes your Kraken API credentials.
 
