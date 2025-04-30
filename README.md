@@ -37,8 +37,8 @@ To run this project locally, you will need:
 Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/your-username/quetzalcoatl-trading-ui.git
-cd quetzalcoatl-trading-ui
+git clone https://github.com/JoseRaul42/Quetzalcoatl.git
+cd Quetzalcoatl
 npm install
 ```
 
