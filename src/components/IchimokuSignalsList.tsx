@@ -2,9 +2,10 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, ArrowDown, ArrowUp, Circle, RefreshCw, XCircle } from "lucide-react";
+import { AlertCircle, CircleCheck, CircleX, Circle, RefreshCw, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface IchimokuSignal {
   pair: string;
@@ -49,28 +50,30 @@ const IchimokuSignalsList: React.FC<IchimokuSignalsListProps> = ({
     }).format(value);
   };
   
+  // Updated signal icons for deuteranopia-friendly design
   const getSignalIcon = (signal: string) => {
     switch (signal) {
       case 'BUY':
-        return <ArrowUp className="h-4 w-4 text-green-500" />;
+        return <CircleCheck className="h-4 w-4 text-blue-500" />;
       case 'SELL':
-        return <ArrowDown className="h-4 w-4 text-red-500" />;
+        return <CircleX className="h-4 w-4 text-orange-500" />;
       default:
         return <Circle className="h-4 w-4 text-gray-500" />;
     }
   };
   
+  // Updated signal badges for deuteranopia-friendly colors
   const getSignalBadge = (signal: string) => {
     switch (signal) {
       case 'BUY':
         return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
             BUY
           </Badge>
         );
       case 'SELL':
         return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
+          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
             SELL
           </Badge>
         );
@@ -173,6 +176,32 @@ const IchimokuSignalsList: React.FC<IchimokuSignalsListProps> = ({
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5" />
             Ichimoku Cloud Signals (4H)
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground ml-1" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="p-2 max-w-xs">
+                    <p className="text-sm font-medium">Signal Legend:</p>
+                    <div className="mt-2 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <CircleCheck className="h-3 w-3 text-blue-500" />
+                        <span className="text-xs">Blue: BUY signal</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <CircleX className="h-3 w-3 text-orange-500" />
+                        <span className="text-xs">Orange: SELL signal</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Circle className="h-3 w-3 text-gray-500" />
+                        <span className="text-xs">Gray: NEUTRAL signal</span>
+                      </div>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </CardTitle>
           <CardDescription>
             Real-time breakout signals based on Ichimoku Cloud analysis
