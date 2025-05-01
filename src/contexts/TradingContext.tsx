@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 
-export type TradingPair = 'BTC/USD' | 'ETH/USD' | 'XRP/USD' | 'ADA/USD' | 'SOL/USD';
+export type TradingPair = 'BTC/USD' | 'ETH/USD' | 'TAO/USD' | 'ADA/USD' | 'SOL/USD';
 export type DataMode = 'websocket' | 'rest';
 export type Sentiment = 'positive' | 'neutral' | 'negative';
 
@@ -70,7 +70,7 @@ const TradingContext = createContext<TradingContextType | undefined>(undefined);
 const KrakenPairMap: Record<TradingPair, string> = {
   'BTC/USD': 'XBT/USD',
   'ETH/USD': 'ETH/USD',
-  'XRP/USD': 'XRP/USD',
+  'TAO/USD': 'TAO/USD',
   'ADA/USD': 'ADA/USD',
   'SOL/USD': 'SOL/USD',
 };

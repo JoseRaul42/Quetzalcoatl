@@ -46,7 +46,7 @@ const MarketMonitor: React.FC = () => {
   const [ichimokuStatus, setIchimokuStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [ichimokuError, setIchimokuError] = useState<string | null>(null);
   
-  const tradingPairs = ['XBT/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'SOL/USD'];
+  const tradingPairs = ['XBT/USD', 'ETH/USD', 'TAO/USD', 'ADA/USD', 'SOL/USD'];
   const dataModes = ['websocket', 'rest'];
   
   // Format utility functions

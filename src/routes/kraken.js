@@ -85,7 +85,7 @@ app.get('/api/kraken-orderflow', async (req, res) => {
 
 
 // Updated trading pairs with both XBT/USD and BTC/USD for Bitcoin - adding BTC specifically
-const tradingPairs = ['XBT/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'SOL/USD', 'BTC/USD'];
+const tradingPairs = ['XBT/USD', 'ETH/USD', 'TAO/USD', 'ADA/USD', 'SOL/USD', 'BTC/USD'];
 
 app.get('/api/ichimoku-signals', (req, res) => {
   try {
