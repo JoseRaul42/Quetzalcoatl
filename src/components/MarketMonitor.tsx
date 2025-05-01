@@ -71,11 +71,11 @@ const MarketMonitor: React.FC = () => {
     return date.toLocaleTimeString();
   };
   
-  const getPriceChangeClass = () => {
-    if (!currentMarketData.price) return 'text-neutral';
-    const previousPrice = (currentMarketData.price || 0) - (Math.random() - 0.5) * 100;
-    return previousPrice < currentMarketData.price ? 'text-profit' : 'text-loss';
-  };
+  // const getPriceChangeClass = () => {
+  //   if (!currentMarketData.price) return 'text-neutral';
+  //   const previousPrice = (currentMarketData.price || 0) - (Math.random() - 0.5) * 100;
+  //   return previousPrice < currentMarketData.price ? 'text-profit' : 'text-loss';
+  // };
   
   // Calculate market sentiment based on trade data
   const marketSentiment = useMemo(() => {
@@ -265,14 +265,14 @@ const MarketMonitor: React.FC = () => {
                   <div className="text-4xl font-bold mr-2">
                     {formatCurrency(currentMarketData.price)}
                   </div>
-                  <div className={`text-sm font-semibold ${getPriceChangeClass()}`}>
+                  {/* <div className={`text-sm font-semibold ${getPriceChangeClass()}`}>
                     {Math.random() > 0.5 ? (
                       <TrendingUp className="inline h-4 w-4 mr-1" />
                     ) : (
                       <TrendingDown className="inline h-4 w-4 mr-1" />
                     )}
                     {(Math.random() * 5).toFixed(2)}%
-                  </div>
+                  </div> */}
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

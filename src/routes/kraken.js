@@ -29,7 +29,7 @@ app.post('/api/test-kraken', async (req, res) => {
 
 // Enhanced route to pull trades + orderbook for order flow analysis
 app.get('/api/kraken-orderflow', async (req, res) => {
-  const { pair = 'BTCUSD', depthCount = 25 } = req.query;
+  const { pair = 'BTCUSD', depthCount = 500 } = req.query;
   console.log(`[Backend] Requesting orderflow data for pair: ${pair}`);
   console.log('[Backend] Query Parameters:', req.query);
 
