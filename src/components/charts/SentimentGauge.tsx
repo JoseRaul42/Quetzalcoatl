@@ -16,18 +16,20 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
   // Ensure the value is within 0-1 range
   const safeValue = Math.max(0, Math.min(1, value));
   
-  // Calculate colors based on sentiment value
+  // Calculate colors based on sentiment value with enhanced deuteranopia-friendly colors
   const getBullColor = () => {
+    // Use blue instead of green for bulls (deuteranopia-friendly)
     const intensity = Math.min(255, Math.floor(safeValue * 2 * 255));
-    return `rgb(0, ${intensity}, 0)`;
+    return `rgb(14, ${Math.max(100, intensity)}, 233)`; // Enhanced blue
   };
   
   const getBearColor = () => {
+    // Use orange instead of red for bears (deuteranopia-friendly)
     const intensity = Math.min(255, Math.floor((1 - safeValue) * 2 * 255));
-    return `rgb(${intensity}, 0, 0)`;
+    return `rgb(${intensity}, 116, 10)`; // Enhanced orange
   };
   
-  // Get sentiment text description
+  // Get sentiment text description with more distinctive value ranges
   const getSentimentText = () => {
     if (safeValue >= 0.7) return "Strongly Bullish";
     if (safeValue >= 0.6) return "Bullish";
@@ -81,7 +83,7 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
                         className="text-xl font-bold"
                         fill="#FFFFFF" // High contrast white text for better visibility
                         stroke="#000000" // Thin black outline for contrast
-                        strokeWidth="0.5"
+                        strokeWidth="0.7" // Increased outline thickness
                       >
                         {bullishPercentage}%
                       </text>
@@ -93,7 +95,7 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
                         className="text-xs"
                         fill="#FFFFFF" // High contrast white text
                         stroke="#000000" // Thin black outline for contrast
-                        strokeWidth="0.3"
+                        strokeWidth="0.5" // Increased outline thickness
                       >
                         Bullish
                       </text>

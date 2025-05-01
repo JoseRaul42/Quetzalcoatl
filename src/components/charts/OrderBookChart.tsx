@@ -80,8 +80,8 @@ export const OrderBookChart: React.FC<OrderBookChartProps> = ({ data }) => {
 
   return (
     <ChartContainer config={{
-      bidVolume: { color: "#22c55e" }, // Green
-      askVolume: { color: "#ef4444" }, // Red
+      bidVolume: { color: "#0EA5E9" }, // Enhanced blue for bids (deuteranopia-friendly)
+      askVolume: { color: "#F97316" }, // Enhanced orange for asks (deuteranopia-friendly)
     }} className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart

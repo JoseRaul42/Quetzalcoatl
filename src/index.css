@@ -43,6 +43,11 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 222 47% 14%;
     --sidebar-ring: 221 83% 53%;
+    
+    /* Deuteranopia-friendly colors */
+    --color-bullish: 199 89% 48%; /* Blue */
+    --color-bearish: 30 95% 45%; /* Orange */
+    --color-neutral: 0 0% 50%; /* Gray */
   }
 }
 
@@ -70,14 +75,23 @@
   }
   
   .stat-positive {
-    @apply text-profit;
+    @apply text-blue-500; /* Changed from profit to blue */
   }
   
   .stat-negative {
-    @apply text-loss;
+    @apply text-orange-500; /* Changed from loss to orange */
   }
   
   .stat-neutral {
     @apply text-neutral;
+  }
+  
+  /* Deuteranopia-friendly text classes */
+  .text-deuteranopia-safe {
+    @apply text-white text-shadow-contrast;
+  }
+  
+  .text-shadow-contrast {
+    text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.8);
   }
 }

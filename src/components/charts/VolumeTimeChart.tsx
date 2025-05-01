@@ -79,9 +79,9 @@ export const VolumeTimeChart: React.FC<VolumeTimeChartProps> = ({ data }) => {
 
   return (
     <ChartContainer config={{
-      buyVolume: { color: "#22c55e" }, // Green
-      sellVolume: { color: "#ef4444" }, // Red
-      totalVolume: { color: "#3b82f6" }, // Blue
+      buyVolume: { color: "#0EA5E9" }, // Enhanced blue for buy (deuteranopia-friendly)
+      sellVolume: { color: "#F97316" }, // Enhanced orange for sell (deuteranopia-friendly)
+      totalVolume: { color: "#8B5CF6" }, // Vivid purple for total volume (deuteranopia-friendly)
     }} className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -106,12 +106,12 @@ export const VolumeTimeChart: React.FC<VolumeTimeChartProps> = ({ data }) => {
           <Legend />
           <defs>
             <linearGradient id="colorBuy" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--color-buyVolume)" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="var(--color-buyVolume)" stopOpacity={0.1}/>
+              <stop offset="5%" stopColor="var(--color-buyVolume)" stopOpacity={0.9}/>
+              <stop offset="95%" stopColor="var(--color-buyVolume)" stopOpacity={0.2}/>
             </linearGradient>
             <linearGradient id="colorSell" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--color-sellVolume)" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="var(--color-sellVolume)" stopOpacity={0.1}/>
+              <stop offset="5%" stopColor="var(--color-sellVolume)" stopOpacity={0.9}/>
+              <stop offset="95%" stopColor="var(--color-sellVolume)" stopOpacity={0.2}/>
             </linearGradient>
           </defs>
           <Area 
@@ -119,6 +119,7 @@ export const VolumeTimeChart: React.FC<VolumeTimeChartProps> = ({ data }) => {
             dataKey="buyVolume" 
             name="Buy Volume"
             stroke="var(--color-buyVolume)" 
+            strokeWidth={2} // Increased stroke width for better visibility
             fillOpacity={1} 
             fill="url(#colorBuy)" 
             stackId="1"
@@ -128,6 +129,7 @@ export const VolumeTimeChart: React.FC<VolumeTimeChartProps> = ({ data }) => {
             dataKey="sellVolume" 
             name="Sell Volume"
             stroke="var(--color-sellVolume)" 
+            strokeWidth={2} // Increased stroke width for better visibility
             fillOpacity={1} 
             fill="url(#colorSell)" 
             stackId="1"

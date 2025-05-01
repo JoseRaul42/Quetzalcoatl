@@ -50,36 +50,36 @@ const IchimokuSignalsList: React.FC<IchimokuSignalsListProps> = ({
     }).format(value);
   };
   
-  // Updated signal icons for deuteranopia-friendly design
+  // Updated signal icons with enhanced deuteranopia-friendly design
   const getSignalIcon = (signal: string) => {
     switch (signal) {
       case 'BUY':
-        return <CircleCheck className="h-4 w-4 text-blue-500" />;
+        return <CircleCheck className="h-4 w-4 text-blue-500" />; // Enhanced blue
       case 'SELL':
-        return <CircleX className="h-4 w-4 text-orange-500" />;
+        return <CircleX className="h-4 w-4 text-orange-500" />; // Enhanced orange
       default:
-        return <Circle className="h-4 w-4 text-gray-500" />;
+        return <Circle className="h-4 w-4 text-gray-500" />; // Neutral gray
     }
   };
   
-  // Updated signal badges for deuteranopia-friendly colors
+  // Updated signal badges with enhanced deuteranopia-friendly colors
   const getSignalBadge = (signal: string) => {
     switch (signal) {
       case 'BUY':
         return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-400">
             BUY
           </Badge>
         );
       case 'SELL':
         return (
-          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
+          <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 border border-orange-400">
             SELL
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-200">
+          <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-400">
             NEUTRAL
           </Badge>
         );
