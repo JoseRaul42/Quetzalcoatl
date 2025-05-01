@@ -8,6 +8,35 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+
+// Test route (already exists)
+app.post('/api/test-kraken', async (req, res) => {
+  try {
+    const response = await axios.get('https://api.kraken.com/0/public/Time', {
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (response.status === 200) {
+      console.log('[Backend] Kraken Public API /Time success:', response.data);
+      res.status(200).json({ success: true, data: response.data });
+    } else {
+      console.error('[Backend] Kraken Public API /Time failed with status:', response.status);
+      res.status(500).json({ success: false, message: 'Kraken API did not return 200' });
+    }
+  } catch (error) {
+    console.error('[Backend] Error calling Kraken Public API:', error);
+    res.status(500).json({ success: false, message: 'Kraken API error', details: error });
+  }
+});
+
+
+
+
+
+
+
+
 const ohlcStore = {};
 const ichimokuSignals = {};
 
