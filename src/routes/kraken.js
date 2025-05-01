@@ -17,6 +17,73 @@ const candleCollectionStatus = {
   logInterval: 60000
 };
 
+app.get('/api/kraken-orderflow', async (req, res) => {
+  const { pair = 'BTCUSD', depthCount = 500 } = req.query;
+  console.log(`[Backend] Requesting orderflow data for pair: ${pair}`);
+
+  try {
+    const tradesResponse = await axios.get(`https://api.kraken.com/0/public/Trades?pair=${pair}&count=100`);
+    const tradesResult = tradesResponse.data.result;
+    const tradesKey = Object.keys(tradesResult).find(key => key !== 'last');
+    const tradesData = tradesResult[tradesKey];
+
+    const depthResponse = await axios.get(`https://api.kraken.com/0/public/Depth?pair=${pair}&count=${depthCount}`);
+    const depthResult = depthResponse.data.result;
+    const depthKey = Object.keys(depthResult)[0];
+    const depthData = depthResult[depthKey];
+
+    const tickerResponse = await axios.get(`https://api.kraken.com/0/public/Ticker?pair=${pair}`);
+    const tickerResult = tickerResponse.data.result;
+    const tickerKey = Object.keys(tickerResult)[0];
+    const tickerData = tickerResult[tickerKey];
+
+    const enhancedData = {
+      success: true,
+      pair,
+      krakenPair: tradesKey,
+      fetchedAt: new Date().toISOString(),
+      trades: tradesData,
+      orderbook: depthData,
+      ticker: {
+        ask: parseFloat(tickerData?.a?.[0] || 0),
+        bid: parseFloat(tickerData?.b?.[0] || 0),
+        last: parseFloat(tickerData?.c?.[0] || 0),
+        volume: parseFloat(tickerData?.v?.[1] || 0),
+        volumeWeightedAvgPrice: parseFloat(tickerData?.p?.[1] || 0),
+        high: parseFloat(tickerData?.h?.[1] || 0),
+        low: parseFloat(tickerData?.l?.[1] || 0),
+      },
+      metrics: {
+        buyVolume: tradesData
+          .filter(trade => trade[3] === 'b')
+          .reduce((sum, trade) => sum + parseFloat(trade[1]), 0),
+        sellVolume: tradesData
+          .filter(trade => trade[3] === 's')
+          .reduce((sum, trade) => sum + parseFloat(trade[1]), 0),
+        bidWallsCount: depthData.bids.filter(bid => parseFloat(bid[1]) > 5).length,
+        askWallsCount: depthData.asks.filter(ask => parseFloat(ask[1]) > 5).length,
+      }
+    };
+
+    console.log(`[Backend] Fetched ${tradesData.length} trades and ${depthData.asks.length + depthData.bids.length} orderbook levels for ${pair}`);
+    console.log('[Backend] Order flow metrics:', enhancedData.metrics);
+
+    res.status(200).json(enhancedData);
+  } catch (error) {
+    console.error('[Backend] Error fetching Kraken orderflow data:', error?.response?.data || error.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Kraken API error', 
+      details: error?.response?.data || error.message,
+      path: error?.request?.path || 'unknown'
+    });
+  }
+});
+
+
+
+
+
 // Updated trading pairs with both XBT/USD and BTC/USD for Bitcoin - adding BTC specifically
 const tradingPairs = ['XBT/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'SOL/USD', 'BTC/USD'];
 
