@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -16,6 +17,7 @@ const candleCollectionStatus = {
   logInterval: 60000
 };
 
+// Updated trading pairs with both XBT/USD and BTC/USD for Bitcoin - adding BTC specifically
 const tradingPairs = ['XBT/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'SOL/USD', 'BTC/USD'];
 
 app.get('/api/ichimoku-signals', (req, res) => {
@@ -31,6 +33,15 @@ app.get('/api/ichimoku-signals', (req, res) => {
         hasSignal: !!ichimokuSignals[pair.slice(0, 3) + '/' + pair.slice(3)]
       };
     });
+
+    // Create BTC entry from XBT data
+    if (ichimokuSignals['XBT/USD'] && !ichimokuSignals['BTC/USD']) {
+      console.log('[Backend] Adding BTC/USD signals from XBT/USD data');
+      ichimokuSignals['BTC/USD'] = {
+        ...ichimokuSignals['XBT/USD'],
+        pair: 'BTC/USD' // Change the pair name to BTC/USD
+      };
+    }
 
     res.status(200).json({
       success: true,
@@ -121,6 +132,15 @@ function calculateIchimokuSignals(pair) {
     updated: new Date().toISOString()
   };
 
+  // If this is XBT/USD, also create a BTC/USD signal
+  if (readablePair === 'XBT/USD') {
+    ichimokuSignals['BTC/USD'] = {
+      ...ichimokuSignals[readablePair],
+      pair: 'BTC/USD' // Change the pair name to BTC/USD
+    };
+    console.log(`[Backend] Created BTC/USD signal from XBT/USD: ${signal} (${confidence}) at ${currentPrice.toFixed(2)} USD`);
+  }
+
   console.log(`[Backend] Ichimoku signal for ${readablePair}: ${signal} (${confidence}) at ${currentPrice.toFixed(2)} USD (${reason})`);
   if (signalChanged) {
     console.log(`[Backend] ⚠️ SIGNAL CHANGED for ${readablePair}: ${previousSignal} → ${signal}`);
@@ -151,6 +171,15 @@ async function fetchInitialOHLC(pair) {
 
     console.log(`[Bootstrap] Prefilled ${normalizedPair} with ${ohlcStore[normalizedPair].length} historical 4h candles`);
     calculateIchimokuSignals(normalizedPair);
+    
+    // If this is XBTUSD, explicitly duplicate signals for BTCUSD
+    if (normalizedPair === 'XBTUSD' && ichimokuSignals['XBT/USD']) {
+      ichimokuSignals['BTC/USD'] = {
+        ...ichimokuSignals['XBT/USD'],
+        pair: 'BTC/USD'
+      };
+      console.log('[Bootstrap] Created BTC/USD signal from XBT/USD historical data');
+    }
   } catch (err) {
     console.error(`[Bootstrap] Failed to fetch OHLC for ${pair}:`, err.message);
   }
