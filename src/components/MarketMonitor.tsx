@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { BarChart, TrendingUp, TrendingDown, RefreshCw, ChartBar, Gauge } from "lucide-react";
+import { BarChart, TrendingUp, TrendingDown, RefreshCw, ChartBar, Gauge, AlertCircle } from "lucide-react";
 import { useTrading, TradingPair, DataMode } from "@/contexts/TradingContext";
 import { OrderBookChart } from "@/components/charts/OrderBookChart";
 import { VolumeTimeChart } from "@/components/charts/VolumeTimeChart";
 import { SentimentGauge } from "@/components/charts/SentimentGauge";
+import IchimokuSignalsList from "@/components/IchimokuSignalsList";
 import axios from 'axios';
 import { toast } from "sonner";
 
@@ -40,6 +41,7 @@ const MarketMonitor: React.FC = () => {
     side: 'buy' | 'sell';
   }[]>([]);
   
+  const [ichimokuSignals, setIchimokuSignals] = useState<Record<string, any>>({});
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   
@@ -70,12 +72,6 @@ const MarketMonitor: React.FC = () => {
     if (!date) return 'N/A';
     return date.toLocaleTimeString();
   };
-  
-  // const getPriceChangeClass = () => {
-  //   if (!currentMarketData.price) return 'text-neutral';
-  //   const previousPrice = (currentMarketData.price || 0) - (Math.random() - 0.5) * 100;
-  //   return previousPrice < currentMarketData.price ? 'text-profit' : 'text-loss';
-  // };
   
   // Calculate market sentiment based on trade data
   const marketSentiment = useMemo(() => {
@@ -136,21 +132,47 @@ const MarketMonitor: React.FC = () => {
     }
   };
   
+  // Fetch Ichimoku signals from backend
+  const fetchIchimokuSignals = async () => {
+    if (!isConnected) return;
+    
+    try {
+      const response = await axios.get('http://localhost:5000/api/ichimoku-signals');
+      
+      if (response.data.success) {
+        setIchimokuSignals(response.data.signals);
+      }
+    } catch (error) {
+      console.error('Error fetching Ichimoku signals:', error);
+    }
+  };
+  
   // Set up interval to fetch data based on refreshRate
   useEffect(() => {
     if (!isConnected || dataMode !== 'rest') return;
     
     fetchOrderFlowData();
-    const interval = setInterval(fetchOrderFlowData, refreshRate);
+    const orderFlowInterval = setInterval(fetchOrderFlowData, refreshRate);
     
-    return () => clearInterval(interval);
+    return () => clearInterval(orderFlowInterval);
   }, [isConnected, refreshRate, selectedPair, dataMode]);
+  
+  // Set up interval to fetch Ichimoku signals
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    fetchIchimokuSignals();
+    const signalsInterval = setInterval(fetchIchimokuSignals, 10000); // Every 10 seconds
+    
+    return () => clearInterval(signalsInterval);
+  }, [isConnected]);
   
   // Clear data when disconnecting
   useEffect(() => {
     if (!isConnected) {
       setOrderBookData({ asks: [], bids: [] });
       setTradesData([]);
+      setIchimokuSignals({});
     }
   }, [isConnected]);
 
@@ -265,14 +287,6 @@ const MarketMonitor: React.FC = () => {
                   <div className="text-4xl font-bold mr-2">
                     {formatCurrency(currentMarketData.price)}
                   </div>
-                  {/* <div className={`text-sm font-semibold ${getPriceChangeClass()}`}>
-                    {Math.random() > 0.5 ? (
-                      <TrendingUp className="inline h-4 w-4 mr-1" />
-                    ) : (
-                      <TrendingDown className="inline h-4 w-4 mr-1" />
-                    )}
-                    {(Math.random() * 5).toFixed(2)}%
-                  </div> */}
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -309,6 +323,12 @@ const MarketMonitor: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Added Ichimoku Signals Component */}
+      <IchimokuSignalsList 
+        signals={ichimokuSignals}
+        isConnected={isConnected}
+      />
       
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
