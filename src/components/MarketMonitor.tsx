@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -141,9 +140,11 @@ const MarketMonitor: React.FC = () => {
       
       if (response.data.success) {
         setIchimokuSignals(response.data.signals);
+        console.log('Ichimoku signals updated:', response.data.signals);
       }
     } catch (error) {
       console.error('Error fetching Ichimoku signals:', error);
+      toast.error('Failed to fetch Ichimoku signals');
     }
   };
   
@@ -161,7 +162,10 @@ const MarketMonitor: React.FC = () => {
   useEffect(() => {
     if (!isConnected) return;
     
+    // Initial fetch
     fetchIchimokuSignals();
+    
+    // Set up interval for regular updates
     const signalsInterval = setInterval(fetchIchimokuSignals, 10000); // Every 10 seconds
     
     return () => clearInterval(signalsInterval);
@@ -324,7 +328,7 @@ const MarketMonitor: React.FC = () => {
         </Card>
       </div>
       
-      {/* Added Ichimoku Signals Component */}
+      {/* Ichimoku Signals Component */}
       <IchimokuSignalsList 
         signals={ichimokuSignals}
         isConnected={isConnected}
