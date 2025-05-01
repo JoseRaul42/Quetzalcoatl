@@ -79,6 +79,9 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
                         textAnchor="middle" 
                         dominantBaseline="central"
                         className="text-xl font-bold"
+                        fill="#FFFFFF" // High contrast white text for better visibility
+                        stroke="#000000" // Thin black outline for contrast
+                        strokeWidth="0.5"
                       >
                         {bullishPercentage}%
                       </text>
@@ -87,7 +90,10 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
                         y={cy + 15} 
                         textAnchor="middle" 
                         dominantBaseline="central"
-                        className="text-xs text-muted-foreground"
+                        className="text-xs"
+                        fill="#FFFFFF" // High contrast white text
+                        stroke="#000000" // Thin black outline for contrast
+                        strokeWidth="0.3"
                       >
                         Bullish
                       </text>
@@ -101,8 +107,10 @@ export const SentimentGauge: React.FC<SentimentGaugeProps> = ({ value }) => {
       </div>
       
       <div className="mt-4 text-center">
-        <div className="text-lg font-semibold">{getSentimentText()}</div>
-        <div className="text-sm text-muted-foreground mt-1">
+        <div className="text-lg font-semibold bg-gray-800 text-white px-3 py-1 rounded-md">
+          {getSentimentText()}
+        </div>
+        <div className="text-sm text-white bg-gray-700 px-2 py-1 mt-1 rounded">
           Market sentiment based on recent trade volume
         </div>
       </div>
