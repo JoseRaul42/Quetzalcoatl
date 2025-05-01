@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertCircle, ArrowDown, ArrowUp, Circle } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowUp, Circle } from "lucide-react";
 
 export interface IchimokuSignal {
   pair: string;
@@ -78,7 +78,7 @@ const IchimokuSignalsList: React.FC<IchimokuSignalsListProps> = ({ signals, isCo
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Alert className="h-5 w-5" />
+          <AlertCircle className="h-5 w-5" />
           Ichimoku Cloud Signals (4H)
         </CardTitle>
         <CardDescription>
