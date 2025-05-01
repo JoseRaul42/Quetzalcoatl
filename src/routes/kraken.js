@@ -11,6 +11,13 @@ app.use(express.json());
 const ohlcStore = {};
 const ichimokuSignals = {};
 
+// Debug variables for logging candle collection progress
+const candleCollectionStatus = {
+  requiredCandles: 52, // Minimum candles needed for calculations
+  lastLogTime: Date.now(),
+  logInterval: 60000 // Log status every minute
+};
+
 // Test route (already exists)
 app.post('/api/test-kraken', async (req, res) => {
   try {
@@ -106,13 +113,27 @@ app.get('/api/kraken-orderflow', async (req, res) => {
   }
 });
 
-// New route to get Ichimoku Cloud signals
+// New route to get Ichimoku Cloud signals with detailed status
 app.get('/api/ichimoku-signals', (req, res) => {
   try {
-    // Return all calculated signals
+    // Add debug information to the response
+    const debugInfo = {};
+    Object.keys(ohlcStore).forEach(pair => {
+      debugInfo[pair] = {
+        candles: ohlcStore[pair]?.length || 0,
+        lastCandleTime: ohlcStore[pair]?.length > 0 
+          ? new Date(ohlcStore[pair][ohlcStore[pair].length - 1].time * 1000).toISOString()
+          : 'No candles',
+        progress: `${Math.min(100, Math.round((ohlcStore[pair]?.length || 0) / candleCollectionStatus.requiredCandles * 100))}%`,
+        hasSignal: !!ichimokuSignals[pair.slice(0, 3) + '/' + pair.slice(3)]
+      };
+    });
+
+    // Return all calculated signals with debug info
     res.status(200).json({
       success: true,
       signals: ichimokuSignals,
+      debug: debugInfo,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -162,6 +183,9 @@ function initKrakenOHLCWebSocket() {
         ohlcStore[normalizedPair] = [];
       }
     });
+    
+    // Log initial status
+    console.log(`[Backend] Candle collection started. Need ${candleCollectionStatus.requiredCandles} candles per pair for Ichimoku calculations.`);
   });
   
   ws.on('message', (data) => {
@@ -189,10 +213,12 @@ function initKrakenOHLCWebSocket() {
         if (existingIndex >= 0) {
           // Update existing candle
           ohlcStore[pair][existingIndex] = candle;
+          console.log(`[Backend] Updated existing ${pair} candle at time ${new Date(candle.time * 1000).toISOString()}`);
         } else {
           // Add new candle
           if (!ohlcStore[pair]) ohlcStore[pair] = [];
           ohlcStore[pair].push(candle);
+          console.log(`[Backend] Received new ${pair} candle at time ${new Date(candle.time * 1000).toISOString()}`);
           
           // Keep only the last 52 candles (needed for calculations)
           if (ohlcStore[pair].length > 52) {
@@ -203,10 +229,15 @@ function initKrakenOHLCWebSocket() {
         // Sort by time
         ohlcStore[pair].sort((a, b) => a.time - b.time);
         
-        // Calculate Ichimoku signals
+        // Calculate Ichimoku signals 
         calculateIchimokuSignals(pair);
         
-        console.log(`[Backend] Updated OHLC for ${pair}, candles: ${ohlcStore[pair].length}, latest close: ${candle.close}`);
+        // Periodically log candle collection status
+        const now = Date.now();
+        if (now - candleCollectionStatus.lastLogTime > candleCollectionStatus.logInterval) {
+          logCandleStatus();
+          candleCollectionStatus.lastLogTime = now;
+        }
       }
     } catch (error) {
       console.error('[Backend] Error processing WebSocket message:', error);
@@ -230,12 +261,30 @@ function initKrakenOHLCWebSocket() {
   }, 30000);
 }
 
-// Calculate Ichimoku Cloud signals
+// Helper function to log candle collection status
+function logCandleStatus() {
+  console.log('\n[Backend] CANDLE COLLECTION STATUS:');
+  console.log('=================================');
+  
+  Object.keys(ohlcStore).forEach(pair => {
+    const count = ohlcStore[pair]?.length || 0;
+    const readablePair = pair.slice(0, 3) + '/' + pair.slice(3);
+    const progress = Math.min(100, Math.round(count / candleCollectionStatus.requiredCandles * 100));
+    const lastCandleTime = count > 0 ? new Date(ohlcStore[pair][count-1].time * 1000).toISOString() : 'No candles';
+    
+    console.log(`${readablePair}: ${count}/${candleCollectionStatus.requiredCandles} candles (${progress}%) - Latest: ${lastCandleTime}`);
+  });
+  
+  console.log('=================================\n');
+}
+
+// Calculate Ichimoku Cloud signals with improved logging
 function calculateIchimokuSignals(pair) {
   const candles = ohlcStore[pair];
   
   if (!candles || candles.length < 52) {
-    console.log(`[Backend] Not enough candles for ${pair} to calculate Ichimoku (${candles?.length || 0}/52)`);
+    const readablePair = pair.slice(0, 3) + '/' + pair.slice(3);
+    console.log(`[Backend] Not enough candles for ${readablePair} to calculate Ichimoku (${candles?.length || 0}/52 - ${Math.round((candles?.length || 0) / 52 * 100)}%)`);
     return;
   }
   
@@ -261,25 +310,35 @@ function calculateIchimokuSignals(pair) {
   
   // Determine signal based on price in relation to the cloud
   let signal = 'NEUTRAL';
+  let reason = '';
   
   // BUY signal: Price is above the cloud (above both Senkou Span A and B)
   if (currentPrice > Math.max(senkouSpanA, senkouSpanB)) {
     signal = 'BUY';
+    reason = 'Price above cloud';
   }
   // SELL signal: Price is below the cloud (below both Senkou Span A and B)
   else if (currentPrice < Math.min(senkouSpanA, senkouSpanB)) {
     signal = 'SELL';
+    reason = 'Price below cloud';
   }
   // NEUTRAL: Price is inside the cloud
   else {
     signal = 'NEUTRAL';
+    reason = 'Price inside cloud';
   }
   
   // Store the result
   const readablePair = pair.slice(0, 3) + '/' + pair.slice(3); // Convert BTCUSD to BTC/USD format
+  
+  // Check if the signal has changed
+  const previousSignal = ichimokuSignals[readablePair]?.signal;
+  const signalChanged = previousSignal && previousSignal !== signal;
+  
   ichimokuSignals[readablePair] = {
     pair: readablePair,
     signal,
+    reason,
     price: currentPrice,
     tenkanSen,
     kijunSen,
@@ -289,11 +348,19 @@ function calculateIchimokuSignals(pair) {
     updated: new Date().toISOString()
   };
   
-  console.log(`[Backend] Ichimoku signal for ${readablePair}: ${signal} at ${currentPrice}`);
+  // Log more detailed information
+  console.log(`[Backend] Ichimoku signal for ${readablePair}: ${signal} at ${currentPrice.toFixed(2)} USD (${reason})`);
+  
+  if (signalChanged) {
+    console.log(`[Backend] ⚠️ SIGNAL CHANGED for ${readablePair}: ${previousSignal} → ${signal}`);
+  }
 }
 
 // Initialize Kraken WebSocket for OHLC data
 initKrakenOHLCWebSocket();
+
+// Log candle status periodically regardless of new data
+setInterval(logCandleStatus, 60000); // Every minute
 
 const PORT = 5000;
 app.listen(PORT, () => {

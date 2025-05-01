@@ -43,6 +43,8 @@ const MarketMonitor: React.FC = () => {
   const [ichimokuSignals, setIchimokuSignals] = useState<Record<string, any>>({});
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [ichimokuStatus, setIchimokuStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [ichimokuError, setIchimokuError] = useState<string | null>(null);
   
   const tradingPairs = ['BTC/USD', 'ETH/USD', 'XRP/USD', 'ADA/USD', 'SOL/USD'];
   const dataModes = ['websocket', 'rest'];
@@ -131,19 +133,38 @@ const MarketMonitor: React.FC = () => {
     }
   };
   
-  // Fetch Ichimoku signals from backend
+  // Fetch Ichimoku signals from backend with improved logging
   const fetchIchimokuSignals = async () => {
     if (!isConnected) return;
     
     try {
+      setIchimokuStatus('loading');
+      console.log('[MarketMonitor] Fetching Ichimoku signals...');
+      
       const response = await axios.get('http://localhost:5000/api/ichimoku-signals');
       
       if (response.data.success) {
-        setIchimokuSignals(response.data.signals);
-        console.log('Ichimoku signals updated:', response.data.signals);
+        const signalsData = response.data.signals;
+        setIchimokuSignals(signalsData);
+        setIchimokuStatus('success');
+        setIchimokuError(null);
+        
+        // Log the results
+        const pairsReceived = Object.keys(signalsData).length;
+        console.log(`[MarketMonitor] Ichimoku signals received for ${pairsReceived} pairs:`, signalsData);
+        
+        if (pairsReceived === 0) {
+          console.warn('[MarketMonitor] No Ichimoku signals returned. Backend might still be gathering candles.');
+        } else {
+          toast.success(`Ichimoku signals updated for ${pairsReceived} pairs`);
+        }
+      } else {
+        throw new Error(response.data.message || 'Unknown error in signal response');
       }
     } catch (error) {
-      console.error('Error fetching Ichimoku signals:', error);
+      console.error('[MarketMonitor] Error fetching Ichimoku signals:', error);
+      setIchimokuStatus('error');
+      setIchimokuError(error instanceof Error ? error.message : 'Failed to fetch Ichimoku data');
       toast.error('Failed to fetch Ichimoku signals');
     }
   };
@@ -158,17 +179,25 @@ const MarketMonitor: React.FC = () => {
     return () => clearInterval(orderFlowInterval);
   }, [isConnected, refreshRate, selectedPair, dataMode]);
   
-  // Set up interval to fetch Ichimoku signals
+  // Set up interval to fetch Ichimoku signals with better logging
   useEffect(() => {
     if (!isConnected) return;
+    
+    console.log('[MarketMonitor] Setting up Ichimoku signals fetch interval');
     
     // Initial fetch
     fetchIchimokuSignals();
     
     // Set up interval for regular updates
-    const signalsInterval = setInterval(fetchIchimokuSignals, 10000); // Every 10 seconds
+    const signalsInterval = setInterval(() => {
+      console.log('[MarketMonitor] Running scheduled Ichimoku signals update');
+      fetchIchimokuSignals();
+    }, 10000); // Every 10 seconds
     
-    return () => clearInterval(signalsInterval);
+    return () => {
+      console.log('[MarketMonitor] Clearing Ichimoku signals interval');
+      clearInterval(signalsInterval);
+    };
   }, [isConnected]);
   
   // Clear data when disconnecting
@@ -177,6 +206,8 @@ const MarketMonitor: React.FC = () => {
       setOrderBookData({ asks: [], bids: [] });
       setTradesData([]);
       setIchimokuSignals({});
+      setIchimokuStatus('idle');
+      setIchimokuError(null);
     }
   }, [isConnected]);
 
@@ -328,10 +359,12 @@ const MarketMonitor: React.FC = () => {
         </Card>
       </div>
       
-      {/* Ichimoku Signals Component */}
+      {/* Ichimoku Signals Component with enhanced status info */}
       <IchimokuSignalsList 
         signals={ichimokuSignals}
         isConnected={isConnected}
+        status={ichimokuStatus}
+        error={ichimokuError}
       />
       
       <div className="grid md:grid-cols-2 gap-6">
