@@ -1,0 +1,97 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 224 71% 4%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224 76% 48%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217.2 32.6% 13.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 14%;
+    --sidebar-ring: 221 83% 53%;
+    
+    /* Deuteranopia-friendly colors */
+    --color-bullish: 199 89% 48%; /* Blue */
+    --color-bearish: 30 95% 45%; /* Orange */
+    --color-neutral: 0 0% 50%; /* Gray */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .trading-card {
+    @apply rounded-lg border bg-card p-4 shadow-md;
+  }
+  
+  .data-label {
+    @apply text-xs font-medium text-muted-foreground;
+  }
+  
+  .data-value {
+    @apply text-sm font-semibold;
+  }
+  
+  .stat-positive {
+    @apply text-blue-500; /* Changed from profit to blue */
+  }
+  
+  .stat-negative {
+    @apply text-orange-500; /* Changed from loss to orange */
+  }
+  
+  .stat-neutral {
+    @apply text-neutral;
+  }
+  
+  /* Deuteranopia-friendly text classes */
+  .text-deuteranopia-safe {
+    @apply text-white text-shadow-contrast;
+  }
+  
+  .text-shadow-contrast {
+    text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.8);
+  }
+}
